@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- PWA Meta -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AI日历">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#5B6ABF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141428" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<meta name="referrer" content="no-referrer-when-downgrade">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+
+<!-- Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Splash Screen (iOS) -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI 日历</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg: #f5f0eb;
+  --bg-alt: #ede8e0;
+  --card-bg: rgba(255,255,255,0.82);
+  --card-border: rgba(255,255,255,0.6);
+  --text: #2d2d3f;
+  --text-secondary: #6b6b7b;
+  --text-muted: #9b9baf;
+  --border: rgba(0,0,0,0.06);
+  --primary: #5B6ABF;
+  --primary-light: #7B8CDE;
+  --primary-dark: #4A56A0;
+  --primary-glow: rgba(91,106,191,0.18);
+  --accent: #F0A050;
+  --danger: #E0556A;
+  --success: #4CAF87;
+  --star: #F5C542;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.03);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-glow: 0 0 20px var(--primary-glow), 0 4px 16px rgba(91,106,191,0.08);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --glass-blur: saturate(180%) blur(12px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141428;
+    --bg-alt: #1a1a30;
+    --card-bg: rgba(28,28,50,0.88);
+    --card-border: rgba(255,255,255,0.06);
+    --text: #e8e8f2;
+    --text-secondary: #a0a0b8;
+    --text-muted: #6a6a80;
+    --border: rgba(255,255,255,0.06);
+    --primary-glow: rgba(123,140,222,0.22);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.25);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.3);
+    --shadow-glow: 0 0 24px rgba(123,140,222,0.15), 0 4px 16px rgba(123,140,222,0.06);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; font-family: 'Inter', 'SF Pro Display', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
+body { display: flex; justify-content: center; background: linear-gradient(135deg, var(--bg) 0%, var(--bg-alt) 100%); }
+
+/* ===== App Shell ===== */
+#app { width: 100%; max-width: 480px; min-height: 100vh; min-height: 100dvh; position: relative; overflow-x: hidden; display: flex; flex-direction: column; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); padding-left: var(--safe-left); padding-right: var(--safe-right); }
+
+/* ===== Header ===== */
+.app-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: #fff; padding: 22px 20px 18px; text-align: center; flex-shrink: 0; position: relative; overflow: hidden; border-radius: 0 0 28px 28px; }
+.app-header::before { content: ''; position: absolute; top: -50%; left: -30%; width: 160%; height: 200%; background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.08) 0%, transparent 60%), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.06) 0%, transparent 50%), radial-gradient(circle at 50% 80%, rgba(123,140,222,0.15) 0%, transparent 40%); pointer-events: none; }
+.app-header-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; position: relative; }
+.app-header-sub { font-size: 12px; opacity: 0.75; font-weight: 400; margin-top: 4px; position: relative; }
+
+/* ===== Page Container ===== */
+.page-container { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: calc(76px + var(--safe-bottom)); display: none; opacity: 0; transition: opacity 0.2s ease; -webkit-overflow-scrolling: touch; }
+.page-container.active { display: block; opacity: 1; }
+
+/* ===== Bottom Tab Bar ===== */
+.tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: calc(64px + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); display: flex; border-top: 1px solid var(--border); z-index: 100; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 12px rgba(0,0,0,0.04); }
+.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); color: var(--text-muted); font-size: 11px; gap: 3px; position: relative; }
+.tab-item:active::after { content: ''; position: absolute; inset: 4px; border-radius: 16px; background: var(--primary-glow); animation: ripple 0.3s ease-out; }
+@keyframes ripple { from { transform: scale(0.5); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+.tab-item.active { color: var(--primary); }
+.tab-item.active::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background: var(--primary); border-radius: 0 0 3px 3px; }
+.tab-icon { font-size: 21px; line-height: 1; }
+.tab-label { font-size: 10px; font-weight: 500; }
+
+/* ===== Toast ===== */
+.toast { position: fixed; top: 20px; left: 50%; transform: translate(-50%, -120%); background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--text); padding: 12px 24px; border-radius: 24px; font-size: 14px; font-weight: 500; z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-lg); border: 1px solid var(--card-border); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+.toast.show { transform: translate(-50%, 0); }
+.toast.error { color: var(--danger); }
+
+/* ===== Loading Overlay ===== */
+.loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(3px); z-index: 9998; display: none; justify-content: center; align-items: center; flex-direction: column; }
+.loading-overlay.show { display: flex; }
+.loading-spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+.loading-text { margin-top: 14px; font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Modal ===== */
+.modal-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 9990; display: none; justify-content: center; align-items: center; }
+.modal-mask.show { display: flex; }
+.modal-box { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: var(--radius-lg); width: 88%; max-width: 380px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--card-border); }
+.modal-title { padding: 20px 22px 8px; font-size: 17px; font-weight: 700; text-align: center; color: var(--text); }
+.modal-content { padding: 10px 22px 22px; font-size: 14px; color: var(--text-secondary); text-align: center; line-height: 1.7; }
+.modal-actions { display: flex; border-top: 1px solid var(--border); }
+.modal-btn { flex: 1; padding: 14px; text-align: center; font-size: 15px; cursor: pointer; border: none; background: none; color: var(--primary); font-weight: 600; transition: background 0.15s; }
+.modal-btn:first-child { border-right: 1px solid var(--border); color: var(--text-muted); }
+.modal-btn:active { background: rgba(0,0,0,0.04); }
+
+/* ===== AI Settings Modal ===== */
+.settings-form { text-align: left; padding: 4px 22px 18px; }
+.settings-field { margin-bottom: 16px; }
+.settings-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: block; }
+.settings-input, .settings-select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: rgba(0,0,0,0.02); color: var(--text); font-family: inherit; transition: border-color 0.2s; }
+.settings-input:focus, .settings-select:focus { border-color: var(--primary); }
+.settings-select { appearance: none; cursor: pointer; }
+.settings-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.ai-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; font-size: 13px; margin-top: 4px; }
+.ai-status.ready { background: rgba(76,175,135,0.1); color: var(--success); }
+.ai-status.unset { background: rgba(240,160,80,0.1); color: var(--accent); }
+
+/* ===== Detail Modal ===== */
+.detail-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); z-index: 9980; display: none; flex-direction: column; justify-content: flex-end; }
+.detail-mask.show { display: flex; }
+.detail-panel { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 90vh; overflow-y: auto; padding-bottom: 24px; animation: slideUp 0.35s cubic-bezier(0.32,0.72,0,1); border-top: 1px solid var(--card-border); }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.detail-close-bar { display: flex; justify-content: center; padding: 14px; }
+.detail-close-handle { width: 40px; height: 5px; background: var(--text-muted); border-radius: 3px; opacity: 0.35; cursor: pointer; }
+
+/* ===== Home / Index Page ===== */
+.date-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin: 12px 14px; background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: var(--radius-lg); border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); }
+.date-arrow { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 19px; background: rgba(0,0,0,0.03); cursor: pointer; font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1; user-select: none; transition: all 0.2s; }
+.date-arrow:active { background: var(--primary-glow); transform: scale(0.92); }
+.date-center { display: flex; align-items: center; gap: 8px; }
+.date-text { font-size: 16px; font-weight: 700; color: var(--text); }
+.today-tag { font-size: 11px; font-weight: 600; color: #fff; background: var(--primary); padding: 3px 10px; border-radius: 12px; }
+.stats-text { font-size: 13px; font-weight: 500; color: var(--text-muted); padding: 6px 18px 4px; }
+
+/* ===== Calendar Widget ===== */
+.calendar-widget { margin: 0 14px 8px; background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: var(--radius-lg); border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); overflow: hidden; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
+.cal-nav { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer; color: var(--primary); user-select: none; transition: background 0.15s; }
+.cal-nav:active { background: var(--primary-glow); }
+.cal-month-label { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+.cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 10px 6px; text-align: center; }
+.cal-weekdays span { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 4px 0; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 10px 10px; gap: 3px; }
+.cal-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; position: relative; transition: background 0.15s; color: var(--text); user-select: none; min-height: 42px; }
+.cal-cell:hover { background: rgba(0,0,0,0.03); }
+.cal-cell.other-month { color: var(--text-muted); opacity: 0.35; pointer-events: none; }
+.cal-cell.today { background: var(--primary); color: #fff; font-weight: 700; }
+.cal-cell.today:hover { background: var(--primary-dark); }
+.cal-cell.selected { box-shadow: inset 0 0 0 2px var(--primary); }
+.cal-cell.today.selected { box-shadow: inset 0 0 0 2px #fff; }
+.cal-cell-num { line-height: 1; position: relative; z-index: 1; }
+.cal-dots { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; max-width: 100%; }
+.cal-dot { width: 5px; height: 5px; border-radius: 3px; flex-shrink: 0; }
+.cal-dot-more { font-size: 10px; color: var(--text-muted); line-height: 1; margin-left: 1px; }
+.cal-today-btn { text-align: center; padding: 0 0 10px; }
+.cal-today-btn span { font-size: 12px; color: var(--primary); font-weight: 600; cursor: pointer; padding: 4px 14px; border-radius: 12px; background: var(--primary-glow); display: inline-block; transition: background 0.15s; }
+.cal-today-btn span:active { background: rgba(91,106,191,0.25); }
+
+.schedule-list { padding: 0 14px; }
+.schedule-card { display: flex; background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); margin-bottom: 10px; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); border: 1px solid var(--card-border); }
+.schedule-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.schedule-card:active { transform: scale(0.985); }
+.card-tag-badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.2px; white-space: nowrap; margin: 12px 8px 12px 12px; align-self: flex-start; }
+.card-body { flex: 1; display: flex; padding: 14px 14px 14px 0; gap: 6px; }
+.card-time { width: 72px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; }
+.time-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; font-variant-numeric: tabular-nums; }
+.card-content { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+.card-title { font-size: 16px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-footer { display: flex; align-items: center; gap: 6px; }
+.card-cat-label { font-size: 11px; font-weight: 500; opacity: 0.7; }
+.ai-icon { font-size: 15px; margin-left: auto; }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 80px; }
+.empty-icon { font-size: 56px; opacity: 0.6; }
+.empty-text { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-top: 14px; }
+.empty-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+.fab { position: fixed; right: 18px; bottom: 84px; width: 56px; height: 56px; border-radius: 28px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(91,106,191,0.35); cursor: pointer; z-index: 50; color: #fff; font-size: 28px; font-weight: 400; line-height: 1; transition: all 0.25s; animation: fabBreathe 3s ease-in-out infinite; }
+.fab:active { transform: scale(0.9); }
+@keyframes fabBreathe { 0%,100% { box-shadow: 0 6px 20px rgba(91,106,191,0.35); } 50% { box-shadow: 0 6px 28px rgba(91,106,191,0.5), 0 0 40px rgba(123,140,222,0.2); } }
+
+/* ===== Create Page ===== */
+.form-section { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); margin: 0 14px 14px; border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); }
+.form-item { margin-bottom: 18px; }
+.form-item:last-child { margin-bottom: 0; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: block; }
+.form-input, .form-select { width: 100%; height: 42px; font-size: 15px; border: none; border-bottom: 1.5px solid var(--border); outline: none; background: transparent; color: var(--text); padding: 0; transition: border-color 0.2s; font-family: inherit; }
+.form-input:focus, .form-select:focus { border-bottom-color: var(--primary); }
+.form-textarea { width: 100%; min-height: 80px; font-size: 15px; border: 1.5px solid var(--border); border-radius: 12px; padding: 12px; outline: none; resize: vertical; font-family: inherit; background: rgba(0,0,0,0.015); color: var(--text); transition: border-color 0.2s; }
+.form-textarea:focus { border-color: var(--primary); }
+.category-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.category-chip { padding: 7px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1.5px solid var(--border); color: var(--text-secondary); background: var(--card-bg); transition: all 0.2s; font-weight: 500; }
+.category-chip:active { transform: scale(0.95); }
+.ai-hint { display: flex; align-items: center; padding: 12px 16px; border-radius: 12px; margin-bottom: 18px; gap: 8px; font-size: 13px; font-weight: 500; background: var(--primary-glow); color: var(--primary); }
+.ai-hint-icon { font-size: 18px; line-height: 1; }
+.submit-btn { width: 100%; height: 46px; border-radius: 23px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: #fff; font-size: 16px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 4px 14px var(--primary-glow); }
+.submit-btn:active { transform: scale(0.97); opacity: 0.9; }
+.submit-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.form-error { color: var(--danger); font-size: 12px; font-weight: 500; margin-top: 6px; display: none; }
+.form-error.show { display: block; }
+
+/* ===== Suggestions Page ===== */
+.suggestion-page-list { padding: 12px 14px; }
+.suggestion-card-full { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); margin-bottom: 10px; border-radius: var(--radius-md); padding: 18px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); }
+.suggestion-card-full:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.suggestion-card-full:active { transform: scale(0.985); }
+.suggestion-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.suggestion-schedule-title { font-size: 15px; font-weight: 700; color: var(--primary); }
+.suggestion-date { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.suggestion-content { font-size: 14px; color: var(--text); line-height: 1.7; }
+.suggestion-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.unfavorite-btn { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 6px 12px; border-radius: 16px; transition: background 0.2s; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+.unfavorite-btn:active { background: var(--primary-glow); }
+.star-icon { font-size: 18px; color: var(--star); }
+
+/* ===== Profile Page ===== */
+.user-header { display: flex; flex-direction: column; align-items: center; padding: 32px 0 28px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); position: relative; overflow: hidden; border-radius: 0 0 28px 28px; }
+.user-header::before { content: ''; position: absolute; top: -40%; left: -20%; width: 140%; height: 180%; background: radial-gradient(circle at 25% 40%, rgba(255,255,255,0.1) 0%, transparent 55%), radial-gradient(circle at 75% 60%, rgba(123,140,222,0.2) 0%, transparent 50%); pointer-events: none; }
+.avatar-circle { width: 72px; height: 72px; border-radius: 36px; border: 3px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.18); color: #fff; font-size: 30px; font-weight: 800; position: relative; cursor: pointer; }
+.nickname { font-size: 19px; font-weight: 700; color: #fff; margin-top: 10px; cursor: pointer; position: relative; }
+.nickname-input { background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.35); border-radius: 8px; color: #fff; font-size: 18px; text-align: center; padding: 4px 12px; width: 160px; outline: none; font-weight: 600; }
+.nickname-input::placeholder { color: rgba(255,255,255,0.5); }
+.openid-tip { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; position: relative; }
+.stats-card { display: flex; background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); margin: 14px 14px; border-radius: var(--radius-lg); padding: 22px 6px; border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); }
+.stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.stat-number { font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: -0.3px; transition: transform 0.3s; }
+.stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+.stat-divider { width: 1px; background: var(--border); align-self: stretch; margin: 0 4px; }
+.menu-card { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); margin: 0 14px 14px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); }
+.menu-section-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 14px 18px 6px; }
+.menu-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.menu-item:active { background: rgba(0,0,0,0.02); }
+.menu-item:last-child { border-bottom: none; }
+.menu-text { font-size: 15px; color: var(--text); font-weight: 500; }
+.menu-arrow { font-size: 18px; color: var(--text-muted); }
+.menu-item-danger .menu-text { color: var(--danger); }
+
+/* ===== Detail Panel Styles ===== */
+.detail-info-card { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); margin: 0 14px 12px; border-radius: var(--radius-lg); padding: 22px; border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); }
+.detail-info-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 14px; letter-spacing: -0.2px; }
+.detail-info-row { font-size: 14px; color: var(--text-secondary); margin-top: 10px; display: flex; align-items: center; }
+.detail-info-label { color: var(--text-muted); min-width: 52px; font-weight: 500; }
+.detail-info-tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 10px; background: var(--primary-glow); color: var(--primary); margin-top: 10px; }
+.detail-info-note { margin-top: 14px; padding: 14px; background: rgba(0,0,0,0.02); border-radius: 12px; }
+.detail-note-label { color: var(--text-muted); font-size: 12px; font-weight: 500; }
+.detail-note-content { color: var(--text-secondary); font-size: 14px; margin-top: 4px; line-height: 1.6; }
+.detail-actions { display: flex; gap: 10px; margin: 18px 14px 0; }
+.detail-btn-edit { flex: 1; height: 42px; border-radius: 21px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: #fff; font-size: 15px; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow); }
+.detail-btn-edit:active { transform: scale(0.97); opacity: 0.9; }
+.detail-btn-delete { flex: 1; height: 42px; border-radius: 21px; background: transparent; color: var(--danger); font-size: 15px; font-weight: 600; border: 1.5px solid var(--danger); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.detail-btn-delete:active { background: rgba(224,85,106,0.08); }
+.detail-ai-section { margin: 0 14px; }
+.detail-ai-card { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: var(--radius-lg); padding: 22px; border: 1.5px solid var(--card-border); margin-top: 12px; box-shadow: var(--shadow-glow); position: relative; overflow: hidden; }
+.detail-ai-card::before { content: ''; position: absolute; inset: 0; border-radius: var(--radius-lg); padding: 2px; background: linear-gradient(135deg, var(--primary-light), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.detail-ai-card-title { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.detail-ai-card-content { font-size: 14px; color: var(--text); line-height: 1.8; }
+.detail-ai-actions { display: flex; justify-content: flex-end; gap: 18px; margin-top: 14px; }
+.detail-ai-fav { cursor: pointer; font-size: 22px; user-select: none; color: var(--text-muted); transition: all 0.2s; }
+.detail-ai-fav.favorited { color: var(--star); }
+.detail-ai-fav:active { transform: scale(1.2); }
+.detail-ai-del { cursor: pointer; font-size: 13px; color: var(--text-muted); user-select: none; padding: 6px 0; font-weight: 500; }
+.detail-ai-del:active { color: var(--danger); }
+.detail-ai-empty { display: flex; flex-direction: column; align-items: center; padding: 36px 0; }
+.detail-ai-empty-icon { font-size: 42px; opacity: 0.6; }
+.detail-ai-empty-text { font-size: 14px; color: var(--text-muted); margin-top: 10px; font-weight: 500; }
+.detail-ai-gen-btn { margin-top: 16px; font-size: 14px; color: var(--primary); background: none; border: 2px dashed var(--primary-light); cursor: pointer; padding: 8px 20px; border-radius: 20px; font-weight: 600; transition: all 0.2s; }
+.detail-ai-gen-btn:active { background: var(--primary-glow); border-style: solid; }
+.detail-ai-generating { display: flex; justify-content: center; padding: 36px 0; font-size: 14px; color: var(--text-muted); font-weight: 500; flex-direction: column; align-items: center; gap: 10px; }
+.detail-ai-error { color: var(--danger); font-size: 13px; text-align: center; margin-top: 10px; }
+.detail-ai-retry { margin-top: 8px; font-size: 13px; color: var(--primary); cursor: pointer; font-weight: 500; }
+
+/* ===== Data Management ===== */
+.export-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.6; }
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .fab { right: 12px; bottom: 78px; width: 50px; height: 50px; border-radius: 25px; font-size: 26px; }
+  .date-text { font-size: 15px; }
+}
+
+@media (min-width: 768px) {
+  #app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); box-shadow: 0 0 40px rgba(0,0,0,0.06); }
+}
+
+/* ===== Upcoming Summary ===== */
+.upcoming-wrapper { padding: 0; }
+.upcoming-date-row { display: flex; align-items: center; padding: 14px 0 8px; border-top: 1px solid var(--border); }
+.upcoming-date-row:first-child { border-top: none; }
+.upcoming-date-label { font-size: 14px; font-weight: 700; color: var(--primary); margin-right: 10px; cursor: pointer; }
+.upcoming-date-label:hover { opacity: 0.8; }
+.upcoming-schedule-row { display: flex; align-items: center; padding: 10px 0 10px 12px; cursor: pointer; border-radius: 8px; }
+.upcoming-schedule-row:hover { background: var(--primary-glow); }
+.upcoming-time { font-size: 12px; color: var(--text-muted); min-width: 56px; flex-shrink: 0; }
+.upcoming-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-right: 10px; }
+.upcoming-title { font-size: 14px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upcoming-title.important { font-weight: 600; }
+.upcoming-ai-icon { font-size: 14px; margin-left: 6px; flex-shrink: 0; }
+.upcoming-empty { font-size: 13px; color: var(--text-muted); padding: 6px 0; padding-left: 12px; }
+.upcoming-more { font-size: 12px; color: var(--primary); padding: 4px 0 4px 12px; cursor: pointer; }
+.upcoming-more:hover { text-decoration: underline; }
+
+/* ===== iPhone PWA Optimizations ===== */
+/* Prevent text size adjustment on rotation */
+html { -webkit-text-size-adjust: 100%; }
+
+/* Smooth scrolling for iOS */
+.page-container, #scheduleList, #upcomingContent {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent pull-to-refresh in PWA standalone mode */
+@media (display-mode: standalone) {
+  body { overscroll-behavior: none; }
+}
+
+/* iPhone notch safe area for header */
+.app-header {
+  padding-top: calc(22px + var(--safe-top));
+}
+
+/* Better tap targets for mobile */
+.schedule-card, .upcoming-schedule-row, .tab-item {
+  min-height: 44px;
+}
+
+/* Disable iOS callout on long press */
+.card, .schedule-card, .upcoming-schedule-row, .tab-item, .form-item {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Active state for iOS tap highlight */
+.schedule-card:active, .upcoming-schedule-row:active {
+  background: var(--primary-glow);
+  transition: background 0.1s ease;
+}
+
+/* Form inputs iOS fix */
+.form-input {
+  font-size: 16px !important; /* Prevent iOS zoom on focus */
+}
+
+/* Fix iOS momentum scroll inside modals */
+.modal-box { -webkit-overflow-scrolling: touch; max-height: 80vh; overflow-y: auto; }
+
+/* Fix sticky hover on iOS */
+@media (hover: none) {
+  .schedule-card:hover, .upcoming-schedule-row:hover { background: transparent; }
+}
+
+/* ===== PWA Install Banner ===== */
+.pwa-banner { position: fixed; bottom: calc(68px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); width: 92%; max-width: 440px; z-index: 200; animation: slideUp 0.35s ease; }
+.pwa-banner-content { background: var(--card-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-lg); border: 1px solid var(--primary); }
+.pwa-banner-icon { font-size: 28px; flex-shrink: 0; }
+.pwa-banner-text { flex: 1; min-width: 0; }
+.pwa-banner-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.pwa-banner-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.pwa-banner-btn { flex-shrink: 0; background: var(--primary); color: #fff; border: none; border-radius: 20px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.pwa-banner-close { flex-shrink: 0; font-size: 16px; color: var(--text-muted); cursor: pointer; padding: 4px; }
+@keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+/* Hide banner in standalone mode */
+@media (display-mode: standalone) { #pwaInstallBanner { display: none !important; } }
+/* ========================================
+   Login Screen
+   ======================================== */
+#loginContainer {
+  position: fixed; top:0; left:0; width:100%; height:100%; height:100dvh;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  flex-direction: column;
+  padding: 20px;
+  transition: opacity 0.3s ease;
+}
+#loginContainer.hidden { display: none; }
+.login-card {
+  width: 100%; max-width: 400px;
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 36px 28px 28px;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.login-logo { font-size: 48px; margin-bottom: 8px; }
+.login-title {
+  font-size: 22px; font-weight: 700; color: var(--text);
+  margin-bottom: 4px;
+}
+.login-sub {
+  font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+.login-field {
+  margin-bottom: 16px; text-align: left;
+}
+.login-field label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 6px;
+}
+.login-field input {
+  width: 100%; padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px; font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.login-field input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(91,106,191,0.15);
+}
+.login-error {
+  color: #E5484D; font-size: 13px; min-height: 20px;
+  margin-bottom: 8px; text-align: center;
+  transition: opacity 0.2s;
+}
+.login-btn {
+  width: 100%; padding: 13px;
+  background: var(--primary);
+  color: #fff; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+.login-btn:hover { background: var(--primary-dark, #4a57a8); }
+.login-btn:active { transform: scale(0.98); }
+.login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Logout button in header */
+.logout-btn {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.85); font-size: 12px;
+  padding: 4px 10px; border-radius: 8px;
+  cursor: pointer; font-family: inherit;
+  transition: all 0.2s;
+}
+.logout-btn:hover {
+  background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); color: #fff;
+}
+/* ======================================== */
+
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginContainer">
+  <div class="login-card">
+    <div class="login-logo">📅</div>
+    <div class="login-title">AI 智能日历</div>
+    <div class="login-sub">请输入账号密码以继续</div>
+    <div class="login-field">
+      <label>账号</label>
+      <input type="text" id="loginUsername" placeholder="请输入账号" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>密码</label>
+      <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" id="loginBtn" onclick="App.doLogin()">登 录</button>
+  </div>
+</div>
+
+<div id="app">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-header-title">📅 AI 日历</div>
+    <div class="app-header-sub">智能日程管理助手</div>
+    <button class="logout-btn" onclick="App.doLogout()" title="退出登录">退出</button>
+  </div>
+
+  <!-- Page: Index (Tab 0) -->
+  <div class="page-container active" id="page-index">
+    <div class="date-bar">
+      <div class="date-arrow" onclick="App.goPrevDay()">‹</div>
+      <div class="date-center">
+        <span class="date-text" id="dateDisplay"></span>
+        <span class="today-tag" id="todayTag" style="display:none">今天</span>
+      </div>
+      <div class="date-arrow" onclick="App.goNextDay()">›</div>
+    </div>
+    <!-- Calendar Widget -->
+    <div class="calendar-widget" id="calendarWidget">
+      <div class="cal-header">
+        <span class="cal-nav" onclick="App.goPrevMonth()">‹</span>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <span class="cal-nav" onclick="App.goNextMonth()">›</span>
+      </div>
+      <div class="cal-weekdays">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-today-btn" id="calTodayBtn" style="display:none">
+        <span onclick="App.goToday()">📍 回到今天</span>
+      </div>
+    </div>
+    <div class="stats-text" id="statsText">共 0 个日程</div>
+    <!-- PWA Install Banner (hidden in standalone mode) -->
+    <div id="pwaInstallBanner" class="pwa-banner" style="display:none;">
+      <div class="pwa-banner-content">
+        <span class="pwa-banner-icon">📲</span>
+        <div class="pwa-banner-text">
+          <div class="pwa-banner-title">添加到主屏幕</div>
+          <div class="pwa-banner-sub">像 App 一样使用，更快捷</div>
+        </div>
+        <button class="pwa-banner-btn" onclick="App.dismissPwaBanner()">安装</button>
+        <span class="pwa-banner-close" onclick="App.dismissPwaBanner()">✕</span>
+      </div>
+    </div>
+    <div id="scheduleList"></div>
+    <div class="card" id="upcomingSummary" style="margin:0 14px;margin-top:24rpx;background:var(--card-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-radius:var(--radius-lg);padding:18px;border:1px solid var(--card-border);box-shadow:var(--shadow-sm);display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--primary);margin-bottom:14px;">📋 近十天日程汇总</div>
+      <div id="upcomingContent"></div>
+    </div>
+    <div class="fab" onclick="App.switchTab(1)">+</div>
+  </div>
+
+  <!-- Page: Create (Tab 1) -->
+  <div class="page-container" id="page-create">
+    <div class="form-section">
+      <div class="form-item">
+        <label class="form-label">标题</label>
+        <input class="form-input" id="formTitle" placeholder="输入日程标题（最多50字）" maxlength="50">
+      </div>
+      <div class="form-item">
+        <label class="form-label">日期</label>
+        <input class="form-input" type="date" id="formDate">
+      </div>
+      <div class="form-item">
+        <label class="form-label">开始时间</label>
+        <input class="form-input" type="time" id="formStartTime">
+      </div>
+      <div class="form-item">
+        <label class="form-label">结束时间（可选）</label>
+        <input class="form-input" type="time" id="formEndTime">
+      </div>
+      <div class="form-item">
+        <label class="form-label">分类</label>
+        <div class="category-grid" id="categoryGrid"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-item">
+        <label class="form-label">备注</label>
+        <textarea class="form-textarea" id="formNote" placeholder="添加备注（最多200字）" maxlength="200"></textarea>
+      </div>
+      <div class="form-error" id="formError"></div>
+      <div class="ai-hint">
+        <span class="ai-hint-icon">💡</span>
+        <span class="ai-hint-text">创建后可调用 AI 深度推理生成专业建议</span>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="App.onSubmit()">保存日程</button>
+    </div>
+  </div>
+
+  <!-- Page: Suggestions (Tab 2) -->
+  <div class="page-container" id="page-suggestions">
+    <div class="suggestion-page-list" id="suggestionList"></div>
+  </div>
+
+  <!-- Page: Profile (Tab 3) -->
+  <div class="page-container" id="page-profile">
+    <div class="user-header">
+      <div class="avatar-circle" id="avatarCircle" onclick="App.onEditNickname()">U</div>
+      <div class="nickname" id="nicknameDisplay" onclick="App.onEditNickname()">用户</div>
+      <div class="openid-tip" id="openidTip">ID: ****user</div>
+    </div>
+    <div class="stats-card">
+      <div class="stat-item">
+        <div class="stat-number" id="statTotal">0</div>
+        <div class="stat-label">总日程</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-number" id="statSuggestions">0</div>
+        <div class="stat-label">AI 建议</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-number" id="statFavorites">0</div>
+        <div class="stat-label">收藏建议</div>
+      </div>
+    </div>
+    <div class="menu-card">
+      <div class="menu-item" onclick="App.switchTab(2)">
+        <span class="menu-text">⭐ 我的收藏</span>
+        <span class="menu-arrow">›</span>
+      </div>
+      <div class="menu-item" onclick="App.onAiSettings()">
+        <span class="menu-text">🤖 AI 设置</span>
+        <span class="menu-arrow">›</span>
+      </div>
+      <div class="menu-item" onclick="App.onSubscribeReminder()">
+        <span class="menu-text">🔔 提醒设置</span>
+        <span class="menu-arrow">›</span>
+      </div>
+    </div>
+    <div class="menu-card">
+      <div class="menu-section-title">数据管理</div>
+      <div class="menu-item" onclick="App.onExportData()">
+        <span class="menu-text">📤 导出数据</span>
+        <span class="menu-arrow">›</span>
+      </div>
+      <div class="menu-item" onclick="document.getElementById('importFileInput').click()">
+        <span class="menu-text">📥 导入数据</span>
+        <span class="menu-arrow">›</span>
+      </div>
+      <div class="menu-item menu-item-danger" onclick="App.onClearData()">
+        <span class="menu-text">🗑️ 清空数据</span>
+        <span class="menu-arrow">›</span>
+      </div>
+    </div>
+    <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="App.onImportData(event)">
+    <div class="menu-card">
+      <div class="menu-item" onclick="App.onAbout()">
+        <span class="menu-text">ℹ️ 关于</span>
+        <span class="menu-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab-item active" data-tab="0" onclick="App.switchTab(0)">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">日程</span>
+    </div>
+    <div class="tab-item" data-tab="1" onclick="App.switchTab(1)">
+      <span class="tab-icon">➕</span>
+      <span class="tab-label">新增</span>
+    </div>
+    <div class="tab-item" data-tab="2" onclick="App.switchTab(2)">
+      <span class="tab-icon">⭐</span>
+      <span class="tab-label">收藏</span>
+    </div>
+    <div class="tab-item" data-tab="3" onclick="App.switchTab(3)">
+      <span class="tab-icon">👤</span>
+      <span class="tab-label">我的</span>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">加载中...</div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-mask" id="confirmModal">
+    <div class="modal-box">
+      <div class="modal-title" id="confirmTitle"></div>
+      <div class="modal-content" id="confirmContent"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" onclick="App.dismissConfirm()">取消</button>
+        <button class="modal-btn" style="font-weight:700" onclick="App.confirmOk()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Modal -->
+  <div class="modal-mask" id="alertModal">
+    <div class="modal-box">
+      <div class="modal-title" id="alertTitle"></div>
+      <div class="modal-content" id="alertContent"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" style="border:none;font-weight:700" onclick="App.dismissAlert()">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nickname Edit Modal -->
+  <div class="modal-mask" id="nicknameModal">
+    <div class="modal-box">
+      <div class="modal-title">修改昵称</div>
+      <div class="modal-content">
+        <input class="nickname-input" style="width:100%;text-align:center;color:var(--text);background:rgba(0,0,0,0.03);border:1.5px solid var(--border);" id="nicknameInput" placeholder="输入昵称" maxlength="20" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" onclick="App.dismissNickname()">取消</button>
+        <button class="modal-btn" style="font-weight:700" onclick="App.saveNickname()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Settings Modal -->
+  <div class="modal-mask" id="aiSettingsModal">
+    <div class="modal-box">
+      <div class="modal-title">🤖 AI 设置</div>
+      <div class="settings-form">
+        <div class="settings-field">
+          <label class="settings-label">API 端点</label>
+          <input class="settings-input" id="aiEndpoint" placeholder="https://api.deepseek.com/v1/chat/completions">
+        </div>
+        <div class="settings-field">
+          <label class="settings-label">API Key</label>
+          <input class="settings-input" type="password" id="aiKey" placeholder="sk-..." autocomplete="off">
+        </div>
+        <div class="settings-field">
+          <label class="settings-label">模型</label>
+          <select class="settings-select" id="aiModel">
+            <option value="deepseek-reasoner">deepseek-reasoner（深度推理）</option>
+            <option value="deepseek-chat">deepseek-chat（通用对话）</option>
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+            <option value="claude-3.5-sonnet">claude-3.5-sonnet</option>
+          </select>
+        </div>
+        <div class="settings-hint">支持 OpenAI 兼容 API（DeepSeek / OpenAI / 自定义端点）</div>
+        <div class="ai-status" id="aiStatus"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" onclick="App.dismissAiSettings()">取消</button>
+        <button class="modal-btn" style="font-weight:700" onclick="App.saveAiSettings()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel Mask -->
+  <div class="detail-mask" id="detailMask" onclick="App.closeDetailOutside(event)">
+    <div class="detail-panel" id="detailPanel" onclick="event.stopPropagation()">
+      <div class="detail-close-bar">
+        <div class="detail-close-handle" onclick="App.closeDetail()"></div>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ Constants ============
+const CATEGORY_LABEL = {
+  meeting: '会议', interview: '面试', study: '学习',
+  fitness: '运动', shopping: '购物', trip: '出差',
+  travel: '旅游', todo: '待办', family: '家庭', other: '其他'
+};
+const CATEGORY_COLORS = {
+  meeting: '#E0556A', interview: '#F0A050', study: '#5BAAA0',
+  fitness: '#7BB896', shopping: '#D4A840', trip: '#6C5CE7',
+  travel: '#00B894', todo: '#FDCB6E', family: '#E170A0', other: '#B0A0C8'
+};
+const CATEGORY_LIST = ['meeting', 'interview', 'study', 'fitness', 'shopping', 'trip', 'travel', 'todo', 'family', 'other'];
+
+// ============ Utility Functions ============
+const Util = {
+  formatDate(date) {
+    const d = date || new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  },
+  formatTime(date) {
+    const d = date || new Date();
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  },
+  parseDate(dateStr) {
+    return new Date(dateStr.replace(/-/g, '/'));
+  },
+  getWeekday(dateStr) {
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    return days[Util.parseDate(dateStr).getDay()];
+  },
+  calcReminderTime(dateStr, timeStr, offsetMinutes) {
+    const [h, m] = timeStr.split(':').map(Number);
+    const d = Util.parseDate(dateStr);
+    d.setHours(h, m, 0, 0);
+    return d.getTime() - offsetMinutes * 60 * 1000;
+  },
+  getReminderText(startTime, offsetMinutes) {
+    offsetMinutes = offsetMinutes || 30;
+    const [h, m] = startTime.split(':').map(Number);
+    let totalMinutes = h * 60 + m - offsetMinutes;
+    if (totalMinutes < 0) totalMinutes += 24 * 60; // M3 cross-midnight fix
+    const rh = Math.floor(totalMinutes / 60);
+    const rm = totalMinutes % 60;
+    return `${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}`;
+  },
+  generateId() {
+    return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+  },
+  detectCategory(title) {
+    const t = (title || '').toLowerCase();
+    if (t.includes('会议') || t.includes('开会')) return 'meeting';
+    if (t.includes('面试') || t.includes('招聘')) return 'interview';
+    if (t.includes('学习') || t.includes('阅读') || t.includes('读书') || t.includes('课程')) return 'study';
+    if (t.includes('运动') || t.includes('健身') || t.includes('跑步') || t.includes('游泳') || t.includes('锻炼')) return 'fitness';
+    if (t.includes('购物') || t.includes('采购') || t.includes('买东西')) return 'shopping';
+    if (t.includes('出差') || t.includes('差旅') || t.includes('商务') || t.includes('拜访') || t.includes('客户') || t.includes('签约') || t.includes('报销')) return 'trip';
+    if (t.includes('旅游') || t.includes('旅行') || t.includes('出行') || t.includes('度假') || t.includes('景点') || t.includes('攻略') || t.includes('酒店') || t.includes('机票') || t.includes('自驾')) return 'travel';
+    if (t.includes('待办') || t.includes('任务') || t.includes('提醒') || t.includes('截止') || t.includes('ddl') || t.includes('deadline') || t.includes('事项')) return 'todo';
+    if (t.includes('家庭') || t.includes('家人') || t.includes('聚会') || t.includes('聚餐') || t.includes('爸妈') || t.includes('父母') || t.includes('孩子') || t.includes('亲戚') || t.includes('团圆') || t.includes('生日会')) return 'family';
+    return 'other';
+  },
+  formatDateFilename(date) {
+    const d = date || new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+};
+
+// ============ Validator ============
+const Validator = {
+  validateScheduleForm(formData) {
+    const { title, date, startTime, endTime, note } = formData;
+    if (!title || title.trim().length === 0) return { valid: false, message: '请输入日程标题' };
+    if (title.length > 50) return { valid: false, message: '标题不能超过50个字' };
+    if (!date) return { valid: false, message: '请选择日期' };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { valid: false, message: '日期格式不正确' };
+    if (!startTime) return { valid: false, message: '请选择开始时间' };
+    if (!/^\d{2}:\d{2}$/.test(startTime)) return { valid: false, message: '时间格式不正确' };
+    if (endTime && !/^\d{2}:\d{2}$/.test(endTime)) return { valid: false, message: '结束时间格式不正确' };
+    if (endTime && startTime >= endTime) return { valid: false, message: '结束时间必须晚于开始时间' };
+    if (note && note.length > 200) return { valid: false, message: '备注不能超过200个字' };
+    return { valid: true, message: 'ok' };
+  }
+};
+
+// ============ AI Rule Engine (fallback) ============
+const AIEngine = {
+  matchSuggestion(title, note) {
+    const t = (title || '').toLowerCase();
+
+    // ---- meeting 会议 ----
+    if (/会议|开会|评审|周会|汇报|demo|站会|例会|研讨会|座谈会|复盘/.test(t)) {
+      return '建议按"5P 框架"准备：①Purpose 明确会议目标并在邀请中说明，让参会者带着预期来；②Participants 控制 5-8 人核心参会，提前 24h 发送背景资料与议程；③Process 设定明确议程时间表，每个议题标注讨论时长与负责人，严格控制超时；④Product 会前明确期望产出类型（决策/方案/信息同步/头脑风暴），避免"为开会而开会"；⑤Pitfalls 预判分歧点并准备预案，涉及跨部门协作的敏感议题建议提前一对一沟通对齐，避免会上"突袭"。会中指定一人记录关键决策与待办事项（Action Items），会后 2 小时内同步会议纪要，确保每项待办有明确负责人与截止日期。';
+    }
+
+    // ---- interview 面试 ----
+    if (/面试|招聘|候选人|入职|谈薪|offer|内推|猎头|背调/.test(t)) {
+      return '建议采用"STAR 面试法"结构化评估：①Situation 请候选人描述具体情境或项目背景；②Task 追问其在当时承担的任务与角色定位；③Action 深挖采取的具体行动步骤、技术选型理由与协作方式；④Result 关注可量化的成果数据及复盘反思。每轮面试建议准备 3-5 个核心问题，搭配 1-2 个压力场景题，预留 15 分钟给候选人反向提问——候选人的提问质量往往比回答更能反映其思维深度。面试结束后 30 分钟内完成评分表填写（技术能力、沟通协作、文化匹配、成长潜力 4 个维度各 1-5 分），避免首因效应和近因效应导致的判断偏差。如有多个候选人，建议建立横向对比矩阵统一评估标准。';
+    }
+
+    // ---- study 学习 ----
+    if (/学习|阅读|读书|课程|培训|考试|考证|网课|刷题|自习|备考|复习/.test(t)) {
+      return '建议采用"费曼学习法 + 间隔重复"双引擎策略：①主动学习阶段——用自己的话将知识点讲给一个"虚拟听众"，发现讲不清楚的地方就是理解盲区，立即回到教材补漏；②编码输出阶段——将理解后的内容写成思维导图或笔记卡片，用自己组织的逻辑结构替代被动划线；③间隔重复阶段——在第 1 天、第 3 天、第 7 天、第 30 天四个时间节点进行主动回忆测试，利用 Anki 或自制闪卡系统化管理复习节奏。学习环境方面建议开启手机勿扰模式，采用番茄钟 25+5 的节奏（每 4 个番茄钟后休息 15-20 分钟），学习结束后用 5 分钟做当日学习总结。如果是备考，建议先做一套真题摸底，根据薄弱模块分配时间权重而非平均用力。';
+    }
+
+    // ---- fitness 运动 ----
+    if (/运动|健身|跑步|游泳|锻炼|瑜伽|减脂|增肌|体能|拉伸|有氧|力量|骑行/.test(t)) {
+      return '建议遵循"热身（10分钟）→ 主训练（40-50分钟）→ 冷身拉伸（10分钟）"三段式结构。热身阶段从低强度动态拉伸开始（如肩部环绕、弓步转体、开合跳），逐步提升心率至最大心率的 50-60%；主训练阶段根据目标选择模式：减脂优先 HIIT 间歇（30 秒冲刺 + 60 秒恢复 × 8 组），增肌采用渐进超负荷原则（每组 8-12 RM，组间休息 60-90 秒），心肺耐力保持最大心率 65-75% 区间持续 30 分钟以上；冷身阶段做静态拉伸每个肌群保持 20-30 秒，帮助乳酸代谢和肌肉恢复。运动前 2 小时摄入复合碳水（如燕麦 + 香蕉），运动中少量多次补水（每 15 分钟 100-150ml），运动后 30 分钟内补充蛋白质（如鸡蛋/蛋白粉 + 牛奶）以促进肌肉合成。每周保持 3-4 次运动频率，安排 1-2 天主动恢复日。';
+    }
+
+    // ---- shopping 购物 ----
+    if (/购物|采购|买东西|囤货|比价|下单|逛街|剁手|囤货清/.test(t)) {
+      return '建议采用"需求分级 + 三方比价"消费决策流程。第一步需求分级：将拟购物品分为 A 类（刚需急需，3 天内必须用）、B 类（改善型需求，本周内购买即可）、C 类（冲动型欲望，放入"冷静清单"观察 72 小时再决定），避免因促销 FOMO 心理而购买 C 类物品。第二步多渠道比价：至少对比 3 个渠道（官方旗舰店、头部折扣平台、线下实体店），关注历史价格走势（可用比价插件查看近 6 个月价格曲线），警惕"先涨后降"的虚假优惠。第三步决策清单：每件物品写下"购买理由"和"不使用后果"，如果找不到不使用超过 3 次的场景则不购买。对于大额消费（超过月可支配收入的 10%），建议和家人或信任的朋友讨论后再决定，利用"旁观者理性"克服自身的决策偏差。';
+    }
+
+    // ---- trip 出差 ----
+    if (/出差|差旅|商务|拜访|客户|签约|报销|跟单|尽调|考察/.test(t)) {
+      return '【目的地天气研判】出发前 3 天起持续关注目的地天气：查看温度范围、体感温度（湿度+风力修正后）、逐日降水概率。跨气候带出行（如北方→南方、国内→国外）建议分层穿搭：内层速干+中层保暖+外层防风/防雨，应对室内外温差。同时关注日出日落时间与紫外线指数，户外行程避免正午暴晒时段。\n\n【交通方案比选】飞机出行：提前查询航班时刻表，避开早高峰机场交通，建议提前 2h 到达机场，早班机（7-9 点）延误率远低于午后航班。高铁/动车：行程 < 4h 时高铁综合效率优于飞机（准点率 > 95%），善用静音车厢处理邮件或阅读，车程中完成 30% 的路途工作。市内交通：提前下载当地主流打车 App + 离线地铁图，预约接送机/站服务（出发前 1h 确认司机位置），备好零钱/交通卡应对无网络场景。\n\n【客户拜访经办 Tips】① 提前 24h 发送拜访议程邮件——明确沟通目的、参会人、预计时长与期望产出，让对方有备而来；② 准备公司资料电子版（iPad/平板展示比手机屏幕更专业，注意提前充电）；③ 了解对方决策链——谁是关键决策者？决策周期多长？预算审批流程如何？④ 准备 3 个行业话题破冰——行业热点、对方近期动态、共同关注的趋势。合同签约：提前 48h 完成条款审核，重要条款逐条标记；费用管理：消费当场索要电子发票，每晚花 10 分钟整理当日票据（拍照+分类+归档"出差费用"相册），避免返程后遗漏；返程汇报：利用返程途中 30-40 分钟快速起草出差纪要——核心收获/待跟进事项/竞品观察/下一步行动。\n\n【时间提醒链】出发前日 20:00 → 检查证件（身份证/护照）+行李清单；出发当天 → 提前 2h 启程；拜访前 30min → 到达写字楼下做最后准备；返程前 1h → 确认交通方式与时间。多设几道闹钟，互为备份。';
+    }
+
+    // ---- travel 旅游 ----
+    if (/旅游|旅行|出行|度假|景点|攻略|酒店|机票|自驾|徒步|露营|跟团|自由行/.test(t)) {
+      return '【目的地天气与季节】出发前 3 天开始查天气趋势：每日温差范围、降水概率、风速体感。跨气候带出行（如冬→夏）需梯度增减衣物。查当地日出日落时间，规划摄影"黄金时段"（日出后 30 分钟 + 日落前 60 分钟）。旺季出行关注景区实时人流量数据。\n\n【经典景点推荐】自然景观类：建议早晨 7-9 点前往，此时光线柔和、气温宜人，避开上午 10 点后的大巴团人流，标注建议游玩时长（通常 2-3h）；人文历史类：务必提前网上预约门票（官方公众号/平台），工作日前往排队时间减少约 50%，建议租借语音导览或下载讲解 App 提升游览深度；网红打卡点：避开正午 12-14 点顶光时段（面部阴影重、出片效果差），下午 4-6 点侧光最佳，部分机位需排队建议预留等候时间。每天安排不超过 3 个核心景点，景点间预留 30-45 分钟交通时间，总行程中保留 20% 弹性空白时段应对意外发现和体力恢复。\n\n【美食推荐分层】第一层——本地老店（经营 10 年以上，人均 ¥60-120），味道正宗但环境朴素，提前电话确认营业时间避免扑空；第二层——网红餐厅（环境出片、适合社交分享，人均 ¥100-200），建议提前 1-3 天在点评平台订位，标注靠窗/景观位偏好；第三层——在地人推荐的小众馆子（藏在巷子深处，味道最正宗），可咨询民宿房东或当地朋友推荐。早餐：去菜市场周边早餐店体验本地烟火气；午餐：吃本地快餐/小吃了解日常饮食风味；晚餐：体验当地特色正餐，搭配地方酒饮助兴。\n\n【住宿方案】经济型（¥150-300/晚）：青旅床位/快捷酒店，适合独自背包客，选"近地铁+24h 前台+WiFi 稳定"为优先条件；舒适型（¥400-800/晚）：品牌连锁酒店，靠近地铁枢纽站（步行 10 分钟内），含早餐更省心；特色体验（¥800-2000/晚）：民宿/设计酒店/温泉旅馆，提前 3-7 天通过官方渠道预订可享早鸟折扣，注意查看真实住客评价而非精修图。无论哪种类型，选"距最近地铁站步行 < 10 分钟 + 24 小时前台"的住宿可避免夜间抵达时无人值守的尴尬。\n\n【安全贴士】手机保存当地报警/急救/使领馆联系电话（中国外交部全球领事保护热线 +86-10-12308），行程分享给 1-2 位家人/朋友，设早晚报平安闹钟（21:00 发消息确认安全），随身包备小额现金+充电宝+紧急联系卡。';
+    }
+
+    // ---- todo 待办 ----
+    if (/待办|任务|提醒|截止|ddl|deadline|事项|清单|备忘|to.?do|日程/i.test(t)) {
+      return '【一、艾森豪威尔矩阵四象限】将所有待办放入四象限：Q1 紧急+重要 → 立即处理，今天必须完成，建议先做最棘手的（吃青蛙法）；Q2 重要+不紧急 → 安排固定时间块推进，这是拉开人与人差距的关键区间，最容易被忽略但也最关键；Q3 紧急+不重要 → 委托他人或集中快速批量处理，尽量减少亲自投入；Q4 不紧急+不重要 → 直接删除或归档到"也许某天"清单，不占用大脑带宽。每天至少从 Q2 中抽取 1-2 项来推进，这是长期价值的来源。\n\n【二、时间预算法】< 2 分钟的任务 → 立刻做，不要放入清单（两分钟法则）；2-15 分钟的任务 → 归入"碎片时间"清单，在等车/排队/茶歇间隙集中处理；15-60 分钟的任务 → 安排在番茄钟时间块（25min 冲刺 + 5min 休息）；> 60 分钟的任务 → 拆分为多个子任务，每个 25-30 分钟，设置子任务间的检查点。当天计划总用时不超过可用时间的 60%，预留 40% 缓冲应对突发和深度思考。\n\n【三、精力匹配法】早晨精力峰值时段（通常 8:00-10:00）→ 分配给需要创造力和深度思考的任务；上午中高能时段 → 协作沟通类任务（会议/评审/1v1 沟通）；下午低谷时段（13:00-15:00）→ 机械任务（邮件批处理/费用报销/数据录入/归档）；晚间回升时段（19:00-21:00）→ 轻量学习/明日规划/周计划回顾。根据个人生物钟微调上述时段匹配，找到自己精力波动的"个人节律"。\n\n【四、防拖延机制】"5 分钟起步法"——骗大脑"我只做 5 分钟"，一旦开始就容易进入心流状态继续下去；"公开承诺法"——向他人宣布截止时间和交付物，利用社交压力倒逼行动；"奖励机制"——每完成 4 个番茄钟奖励一杯咖啡/散步 10 分钟，建立正反馈循环；"环境设计"——关闭手机通知、清理桌面杂物、戴上降噪耳机，降低启动任务的环境摩擦成本。\n\n【五、复盘闭环】每日 3 分钟快速复盘：今天完成了什么？卡住了什么？明天最重要的 3 件事是什么？每周日 10 分钟周回顾：本周完成率如何？时间估算准确度如何？下周优先级是否需要调整？持续 2 周的复盘数据将揭示个人工作效率模式和可优化点。';
+    }
+
+    // ---- family 家庭 ----
+    if (/家庭|家人|聚会|聚餐|爸妈|父母|孩子|亲戚|团圆|生日会|家庭日|年夜饭|满月|寿宴/.test(t)) {
+      return '【人员确认】先确认最终人数（成人__人/老人__人/儿童__人），逐一统计饮食禁忌（海鲜过敏/素食/忌辣/忌甜/清真等），提前 1 周在家庭群发起接龙报名，提前 3 天锁定确定人数便于订位。建一个"聚会小分队"临时群（3-4 人），安排 1 位负责订餐、1 位负责采购、1 位负责现场协调，减轻单打独斗压力。\n\n【餐厅选择指南】8 人以下 → 中式包间圆桌（人均 ¥100-200），温馨有氛围；8-15 人 → 酒店中餐厅大包间（人均 ¥150-300），通常配备独立卫生间和沙发休息区，长辈方便；15 人以上 → 宴会厅或轰趴馆（人均 ¥200-400），含 KTV/桌游/棋牌等多功能设施，大人小孩各得其所。关键考察点：停车位数量是否充足、有无无障碍通道/电梯（方便轮椅或行动不便老人）、包间最低消费标准、是否允许自带酒水及开瓶费。\n\n【热门餐厅推荐】杭帮菜系：外婆家/绿茶/新白鹿——性价比高、菜品覆盖广、老少皆宜；粤菜系：点都德/陶陶居/蔡澜港式点心——环境雅致、点心精致、茶文化体验佳；川湘菜系：眉州东坡/费大厨辣椒炒肉——氛围热烈、适合喜欢重口味的家庭；私房菜体验：在大众点评或小红书搜索"家宴"或"私房菜"，本地口碑私厨提供定制化体验，仪式感更强；自助餐：万豪/希尔顿等酒店自助——各取所需无需迁就口味，通常儿童半价、老人优惠价。提前 3-7 天电话预订，务必告知服务人员有几位老人/儿童以便安排座椅和特殊需求。\n\n【家宴方案 ⭐】菜单搭配：2 道硬菜（鱼/肉主菜）+ 4 道热菜（荤素搭配）+ 2 道凉菜（开胃清爽）+ 1 道汤 + 1 道甜品，丰盛不浪费。采购提前 1 天完成，肉类提前腌制（入味更佳），蔬菜当天清洗保持新鲜，准备一次性餐具减少洗碗负担，鼓励每位家人带一道"拿手菜"增加参与感。\n\n【活动设计】① 翻老照片环节——勾起集体回忆，老人最爱；② 家庭趣味问答——准备 10 个关于家庭成员的有趣问题活跃气氛；③ 桌游/麻将——老少咸宜的娱乐活动；④ 拍全家福——建议聚会开始后 1h 光线和妆容状态最好的时候拍摄，避免饭后疲倦。\n\n【心意清单】长辈：保健品/羊毛围巾/按摩仪/放大镜等实用物件；小孩：绘本/益智玩具/文具礼盒。聚会结束后 24h 内将精选照片发到家庭群，附上一段感谢语，让温暖延续。';
+    }
+
+    // ---- other 默认 ----
+    return '建议采用"时间块管理法 + 准备清单"应对此类日程：① 将日程前后各预留 15 分钟缓冲时间块，避免紧凑排期造成的连锁迟到效应和认知切换成本；② 提前列出所需材料/设备/文件清单，逐项勾选确认，避免临场慌乱；③ 如果该日程涉及他人协作，提前 30 分钟通过消息确认对方状态（人性化提醒而非催促）；④ 为该日程设定一个明确的"完成标准"——什么样的结果算达成目标？完成后花 2 分钟做快速复盘（实际用时 vs 预期、是否达到完成标准、下次可以优化的地方）。持续收集这类小复盘数据，1-2 周后可形成个人时间管理优化的数据基础。';
+  }
+};
+
+// ============ IndexedDB Service ============
+const IDBService = {
+  _db: null,
+  DB_NAME: 'AICalendarDB',
+  DB_VERSION: 1,
+
+  async open() {
+    if (this._db) return this._db;
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('schedules')) {
+          const sStore = db.createObjectStore('schedules', { keyPath: '_id' });
+          sStore.createIndex('date', 'date', { unique: false });
+          sStore.createIndex('status', 'status', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('suggestions')) {
+          const sugStore = db.createObjectStore('suggestions', { keyPath: '_id' });
+          sugStore.createIndex('scheduleId', 'scheduleId', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('user')) {
+          db.createObjectStore('user', { keyPath: '_id' });
+        }
+      };
+      req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+
+  async getAll(storeName) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async get(storeName, id) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const req = tx.objectStore(storeName).get(id);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async put(storeName, item) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const req = tx.objectStore(storeName).put(item);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async delete(storeName, id) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const req = tx.objectStore(storeName).delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async clear(storeName) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const req = tx.objectStore(storeName).clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async clearAll() {
+    await this.clear('schedules');
+    await this.clear('suggestions');
+    await this.clear('user');
+  }
+};
+
+// ============ Data Service (IndexedDB) ============
+const DataService = {
+  CURRENT_USER_ID: 'local_user',
+
+  async getSchedules() {
+    try { return await IDBService.getAll('schedules'); } catch(e) { return []; }
+  },
+  async getSuggestions() {
+    try { return await IDBService.getAll('suggestions'); } catch(e) { return []; }
+  },
+  async getUser() {
+    try { return await IDBService.get('user', this.CURRENT_USER_ID); } catch(e) { return null; }
+  },
+  async saveUser(user) {
+    await IDBService.put('user', user);
+  },
+
+  async initUser() {
+    let user = await this.getUser();
+    if (!user) {
+      user = {
+        _id: this.CURRENT_USER_ID,
+        openid: 'local_user',
+        nickName: '用户',
+        avatarUrl: '',
+        subscribedReminder: false,
+        aiEndpoint: 'https://api.deepseek.com/v1/chat/completions',
+        aiKey: 'sk-09b8a9caa0254d7c99eccd7460d91716',
+        aiModel: 'deepseek-reasoner',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      await this.saveUser(user);
+    }
+    // Ensure AI config fields exist on older user records
+    let userChanged = false;
+    if (user.aiEndpoint === undefined || user.aiEndpoint === '') { user.aiEndpoint = 'https://api.deepseek.com/v1/chat/completions'; userChanged = true; }
+    if (user.aiKey === undefined || user.aiKey === '') { user.aiKey = 'sk-09b8a9caa0254d7c99eccd7460d91716'; userChanged = true; }
+    if (user.aiModel === undefined) { user.aiModel = 'deepseek-reasoner'; userChanged = true; }
+    if (userChanged) await this.saveUser(user);
+    return user;
+  },
+
+  async getSchedulesByDate(date, status) {
+    const all = await this.getSchedules();
+    return all.filter(s => {
+      if (status && s.status !== status) return false;
+      if (date && s.date !== date) return false;
+      return true;
+    }).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+  },
+
+  async getScheduleById(id) {
+    const all = await this.getSchedules();
+    return all.find(s => s._id === id) || null;
+  },
+
+  async getSuggestionByScheduleId(scheduleId) {
+    const all = await this.getSuggestions();
+    return all.find(s => s.scheduleId === scheduleId) || null;
+  },
+
+  async getSuggestionById(id) {
+    const all = await this.getSuggestions();
+    return all.find(s => s._id === id) || null;
+  },
+
+  async createSchedule(data) {
+    const schedules = await this.getSchedules();
+    const now = new Date().toISOString();
+    const schedule = {
+      _id: Util.generateId(),
+      _openid: this.CURRENT_USER_ID,
+      title: data.title.trim(),
+      date: data.date,
+      startTime: data.startTime,
+      endTime: data.endTime || '',
+      note: data.note || '',
+      category: data.category || Util.detectCategory(data.title),
+      reminderTime: Util.calcReminderTime(data.date, data.startTime, 30),
+      hasSuggestion: false,
+      isReminded: false,
+      status: 'active',
+      createdAt: now,
+      updatedAt: now
+    };
+    await IDBService.put('schedules', schedule);
+    return schedule;
+  },
+
+  async updateSchedule(data) {
+    const schedules = await this.getSchedules();
+    const idx = schedules.findIndex(s => s._id === data.scheduleId);
+    if (idx === -1) return null;
+    const s = schedules[idx];
+    if (data.title !== undefined && data.title !== null) s.title = data.title.trim();
+    if (data.date !== undefined && data.date !== null) s.date = data.date;
+    if (data.startTime !== undefined && data.startTime !== null) s.startTime = data.startTime;
+    if (data.endTime !== undefined && data.endTime !== null) s.endTime = data.endTime;
+    if (data.note !== undefined && data.note !== null) s.note = data.note;
+    if (data.category !== undefined && data.category !== null) s.category = data.category;
+    if ((data.startTime || data.date) && s.date && s.startTime) {
+      s.reminderTime = Util.calcReminderTime(s.date, s.startTime, 30);
+    }
+    s.updatedAt = new Date().toISOString();
+    await IDBService.put('schedules', s);
+    return s;
+  },
+
+  async deleteSchedule(scheduleId) {
+    const schedules = await this.getSchedules();
+    const idx = schedules.findIndex(s => s._id === scheduleId);
+    if (idx === -1) return false;
+    schedules[idx].status = 'deleted';
+    schedules[idx].updatedAt = new Date().toISOString();
+    await IDBService.put('schedules', schedules[idx]);
+    return true;
+  },
+
+  async createSuggestion(scheduleId, content) {
+    const now = new Date().toISOString();
+    const sug = {
+      _id: Util.generateId(),
+      scheduleId,
+      _openid: this.CURRENT_USER_ID,
+      content,
+      isFavorite: false,
+      createdAt: now,
+      updatedAt: now
+    };
+    await IDBService.put('suggestions', sug);
+
+    const s = await this.getScheduleById(scheduleId);
+    if (s) { s.hasSuggestion = true; s.updatedAt = now; await IDBService.put('schedules', s); }
+    return sug;
+  },
+
+  async toggleFavorite(suggestionId, isFavorite) {
+    const sug = await this.getSuggestionById(suggestionId);
+    if (!sug) return false;
+    sug.isFavorite = isFavorite;
+    sug.updatedAt = new Date().toISOString();
+    await IDBService.put('suggestions', sug);
+    return true;
+  },
+
+  async deleteSuggestion(suggestionId) {
+    const sug = await this.getSuggestionById(suggestionId);
+    if (!sug) return null;
+    await IDBService.delete('suggestions', suggestionId);
+
+    const allSugs = await this.getSuggestions();
+    const remaining = allSugs.filter(s => s.scheduleId === sug.scheduleId);
+    if (remaining.length === 0) {
+      const s = await this.getScheduleById(sug.scheduleId);
+      if (s) { s.hasSuggestion = false; s.updatedAt = new Date().toISOString(); await IDBService.put('schedules', s); }
+    }
+    return sug;
+  },
+
+  async getStats() {
+    const schedules = (await this.getSchedules()).filter(s => s.status === 'active');
+    const suggestions = await this.getSuggestions();
+    const categoryDistribution = {};
+    schedules.forEach(s => {
+      const cat = s.category || 'other';
+      categoryDistribution[cat] = (categoryDistribution[cat] || 0) + 1;
+    });
+    return { totalSchedules: schedules.length, categoryDistribution, suggestionCount: suggestions.length };
+  },
+
+  /** Export all data as a JSON object */
+  async exportAll() {
+    return {
+      schedules: await this.getSchedules(),
+      suggestions: await this.getSuggestions(),
+      user: await this.getUser(),
+      exportedAt: new Date().toISOString()
+    };
+  },
+
+  /** Import data (merge by _id, skip duplicates) */
+  async importAll(data) {
+    if (data.schedules && Array.isArray(data.schedules)) {
+      const existing = await this.getSchedules();
+      const existingIds = new Set(existing.map(s => s._id));
+      for (const s of data.schedules) {
+        if (!existingIds.has(s._id)) await IDBService.put('schedules', s);
+      }
+    }
+    if (data.suggestions && Array.isArray(data.suggestions)) {
+      const existing = await this.getSuggestions();
+      const existingIds = new Set(existing.map(s => s._id));
+      for (const s of data.suggestions) {
+        if (!existingIds.has(s._id)) await IDBService.put('suggestions', s);
+      }
+    }
+    if (data.user && data.user._id) {
+      await IDBService.put('user', data.user);
+    }
+  },
+
+  /** Migrate from old localStorage data */
+  async migrateFromLocalStorage() {
+    const oldSchedules = localStorage.getItem('ai_calendar_schedules');
+    const oldSuggestions = localStorage.getItem('ai_calendar_suggestions');
+    const oldUser = localStorage.getItem('ai_calendar_user');
+    if (!oldSchedules && !oldSuggestions && !oldUser) return false;
+
+    try {
+      if (oldSchedules) {
+        const arr = JSON.parse(oldSchedules);
+        for (const s of arr) { try { await IDBService.put('schedules', s); } catch(e) {} }
+        localStorage.removeItem('ai_calendar_schedules');
+      }
+      if (oldSuggestions) {
+        const arr = JSON.parse(oldSuggestions);
+        for (const s of arr) { try { await IDBService.put('suggestions', s); } catch(e) {} }
+        localStorage.removeItem('ai_calendar_suggestions');
+      }
+      if (oldUser) {
+        const u = JSON.parse(oldUser);
+        if (u && u._id) { u.aiEndpoint = ''; u.aiKey = ''; u.aiModel = 'deepseek-reasoner'; try { await IDBService.put('user', u); } catch(e) {} }
+        localStorage.removeItem('ai_calendar_user');
+      }
+      return true;
+    } catch(e) { return false; }
+  }
+};
+
+// ============ App Controller ============
+const App = {
+  currentTab: 0,
+  currentDate: '',
+  isEdit: false,
+  editScheduleId: '',
+  confirmCallback: null,
+  _detailScheduleId: '', // Track open detail for refresh
+  calendarYear: 0,
+  calendarMonth: 0,
+
+  async init() {
+    App.showLoading('初始化中...');
+    try {
+      await IDBService.open();
+      const migrated = await DataService.migrateFromLocalStorage();
+      await DataService.initUser();
+      App.currentDate = Util.formatDate(new Date());
+      App.calendarYear = new Date().getFullYear();
+      App.calendarMonth = new Date().getMonth() + 1;
+      await App.renderIndex();
+      App.renderCreateForm();
+      App.switchTab(0);
+      App.hideLoading();
+      if (migrated) App.showToast('已迁移历史数据');
+      this.initPwaBanner();
+    } catch(e) {
+      App.hideLoading();
+      App.showToast('初始化失败: ' + e.message, 'error');
+    }
+  },
+
+  // PWA
+  initPwaBanner() {
+    // Show install banner only in browser, not standalone
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    // Don't show if already dismissed this session
+    if (sessionStorage.getItem('pwa_banner_dismissed')) return;
+    // Check if beforeinstallprompt is available
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this._deferredPrompt = e;
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) banner.style.display = 'block';
+    });
+    // Also show after 3 seconds as fallback (iOS doesn't fire beforeinstallprompt)
+    setTimeout(() => {
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner && banner.style.display === 'none') {
+        // Only show on iOS Safari
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|OPiOS|mercury/.test(navigator.userAgent);
+        if (isIOS && isSafari && !window.matchMedia('(display-mode: standalone)').matches) {
+          if (!sessionStorage.getItem('pwa_banner_dismissed')) {
+            banner.style.display = 'block';
+          }
+        }
+      }
+    }, 3000);
+  },
+  dismissPwaBanner() {
+    sessionStorage.setItem('pwa_banner_dismissed', '1');
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.style.display = 'none';
+    if (this._deferredPrompt) {
+      this._deferredPrompt.prompt();
+      this._deferredPrompt.userChoice.then(() => {
+        this._deferredPrompt = null;
+      });
+    }
+  },
+
+  // ---- Navigation ----
+  switchTab(tab) {
+    this.currentTab = tab;
+    document.querySelectorAll('.page-container').forEach(p => { p.classList.remove('active'); p.style.opacity = '0'; });
+    const target = document.getElementById(['page-index','page-create','page-suggestions','page-profile'][tab]);
+    target.classList.add('active');
+    requestAnimationFrame(() => { target.style.opacity = '1'; });
+    document.querySelectorAll('.tab-item').forEach((el, i) => el.classList.toggle('active', i === tab));
+
+    if (tab === 0) this.renderIndex();
+    else if (tab === 1) this.renderCreateForm();
+    else if (tab === 2) this.renderSuggestions();
+    else if (tab === 3) this.renderProfile();
+  },
+
+  // ---- Index Page ----
+  async renderIndex() {
+    this.updateDateDisplay();
+    await this.renderCalendar();
+    const schedules = await DataService.getSchedulesByDate(this.currentDate, 'active');
+    document.getElementById('statsText').textContent = `共 ${schedules.length} 个日程`;
+    document.getElementById('todayTag').style.display = (this.currentDate === Util.formatDate(new Date())) ? 'inline' : 'none';
+
+    const listEl = document.getElementById('scheduleList');
+    if (schedules.length === 0) {
+      listEl.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <div class="empty-text">暂无日程</div>
+        <div class="empty-sub">点击右下角 + 创建新日程</div>
+      </div>`;
+    } else {
+      listEl.innerHTML = schedules.map(s => {
+        const color = CATEGORY_COLORS[s.category] || CATEGORY_COLORS.other;
+        const label = CATEGORY_LABEL[s.category] || s.category;
+        const timeStr = s.endTime ? `${s.startTime} - ${s.endTime}` : s.startTime;
+        return `<div class="schedule-card" onclick="App.openDetail('${s._id}')">
+          <span class="card-tag-badge" style="background:${color}18;color:${color}">${label}</span>
+          <div class="card-body">
+            <div class="card-time"><span class="time-text">${this.escHtml(timeStr)}</span></div>
+            <div class="card-content">
+              <div class="card-title">${this.escHtml(s.title)}</div>
+              <div class="card-footer">
+                ${s.note ? `<span class="card-cat-label">${this.escHtml(s.note.substring(0,20))}</span>` : ''}
+                ${s.hasSuggestion ? '<span class="ai-icon">💡</span>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    this.renderUpcomingSummary();
+  },
+
+  async renderUpcomingSummary() {
+    const container = document.getElementById('upcomingSummary');
+    const contentEl = document.getElementById('upcomingContent');
+    if (!container || !contentEl) return;
+
+    const today = new Date();
+    const weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
+
+    // Collect 10 days of data
+    let daysHtml = '';
+    let hasAny = false;
+
+    for (let i = 0; i < 10; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dateStr = Util.formatDate(d);
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const weekday = weekDays[d.getDay()];
+      const dateLabel = `${month}月${day}日 ${weekday}`;
+
+      const schedules = await DataService.getSchedulesByDate(dateStr, 'active');
+
+      daysHtml += `<div class="upcoming-date-row" onclick="App.selectUpcomingDate('${dateStr}')">
+        <span class="upcoming-date-label">${dateLabel}</span>
+        ${schedules.length > 0 ? `<span style="font-size:12px;color:var(--text-muted);">${schedules.length}项</span>` : ''}
+      </div>`;
+
+      if (schedules.length === 0) {
+        daysHtml += `<div class="upcoming-empty">— 无安排 —</div>`;
+      } else {
+        hasAny = true;
+        const maxShow = 3;
+        schedules.slice(0, maxShow).forEach(s => {
+          const color = CATEGORY_COLORS[s.category] || CATEGORY_COLORS.other;
+          const isImportant = /trip|family|meeting/.test(s.category);
+          const title = s.title || '';
+          const timeStr = s.startTime || '';
+          daysHtml += `<div class="upcoming-schedule-row" onclick="event.stopPropagation();App.openDetail('${s._id}')">
+            <span class="upcoming-time">${App.escHtml(timeStr)}</span>
+            <span class="upcoming-dot" style="background:${color};"></span>
+            <span class="upcoming-title${isImportant ? ' important' : ''}">${isImportant ? '⚡ ' : ''}${App.escHtml(title)}</span>
+            ${s.hasSuggestion ? '<span class="upcoming-ai-icon">💡</span>' : ''}
+          </div>`;
+        });
+        if (schedules.length > maxShow) {
+          daysHtml += `<div class="upcoming-more" onclick="event.stopPropagation();App.selectUpcomingDate('${dateStr}')">...还有 ${schedules.length - maxShow} 项</div>`;
+        }
+      }
+    }
+
+    contentEl.innerHTML = daysHtml;
+    container.style.display = hasAny ? 'block' : 'none';
+  },
+
+  selectUpcomingDate(dateStr) {
+    this.currentDate = dateStr;
+    const d = Util.parseDate(dateStr);
+    this.calendarYear = d.getFullYear();
+    this.calendarMonth = d.getMonth() + 1;
+    this.renderIndex();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  goPrevDay() {
+    const d = Util.parseDate(this.currentDate);
+    d.setDate(d.getDate() - 1);
+    this.currentDate = Util.formatDate(d);
+    // Sync calendar month if day moved into adjacent month
+    this.calendarYear = d.getFullYear();
+    this.calendarMonth = d.getMonth() + 1;
+    this.renderIndex();
+  },
+  goNextDay() {
+    const d = Util.parseDate(this.currentDate);
+    d.setDate(d.getDate() + 1);
+    this.currentDate = Util.formatDate(d);
+    this.calendarYear = d.getFullYear();
+    this.calendarMonth = d.getMonth() + 1;
+    this.renderIndex();
+  },
+  updateDateDisplay() {
+    const d = Util.parseDate(this.currentDate);
+    const weekday = Util.getWeekday(this.currentDate);
+    document.getElementById('dateDisplay').textContent =
+      `${d.getFullYear()}年${String(d.getMonth()+1).padStart(2,'0')}月${String(d.getDate()).padStart(2,'0')}日 ${weekday}`;
+  },
+
+  // ---- Calendar ----
+  async renderCalendar() {
+    const y = this.calendarYear;
+    const m = this.calendarMonth;
+    const todayStr = Util.formatDate(new Date());
+
+    document.getElementById('calMonthLabel').textContent = `${y}年${m}月`;
+    document.getElementById('calTodayBtn').style.display =
+      (y === new Date().getFullYear() && m === new Date().getMonth() + 1) ? 'none' : '';
+
+    // Fetch all schedules for this month range
+    const firstDay = new Date(y, m - 1, 1);
+    const lastDay = new Date(y, m, 0);
+    const startStr = Util.formatDate(firstDay);
+    const endStr = Util.formatDate(lastDay);
+    const allSchedules = await DataService.getSchedulesByDate('', 'active');
+    const byDate = {};
+    allSchedules.forEach(s => {
+      if (s.date >= startStr && s.date <= endStr) {
+        if (!byDate[s.date]) byDate[s.date] = [];
+        byDate[s.date].push(s.category);
+      }
+    });
+
+    // Build grid: fill leading blanks, then 1..N, then trailing blanks to complete last row
+    const startDow = firstDay.getDay(); // 0=Sun
+    const daysInMonth = lastDay.getDate();
+    const cells = [];
+
+    // Leading blank cells (previous month)
+    for (let i = 0; i < startDow; i++) {
+      cells.push({ day: '', dateStr: '', otherMonth: true });
+    }
+    // This month's days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      cells.push({ day: d, dateStr, otherMonth: false });
+    }
+    // Trailing blanks to fill row
+    while (cells.length % 7 !== 0) {
+      cells.push({ day: '', dateStr: '', otherMonth: true });
+    }
+
+    document.getElementById('calGrid').innerHTML = cells.map(c => {
+      if (c.otherMonth) return `<div class="cal-cell other-month"></div>`;
+
+      const isToday = c.dateStr === todayStr;
+      const isSelected = c.dateStr === this.currentDate;
+      const cats = byDate[c.dateStr] || [];
+
+      let cls = 'cal-cell';
+      if (isToday) cls += ' today';
+      if (isSelected) cls += ' selected';
+
+      let dotsHtml = '';
+      if (cats.length > 0) {
+        const maxDots = 3;
+        const showCats = cats.slice(0, maxDots);
+        dotsHtml = '<div class="cal-dots">' +
+          showCats.map(cat => {
+            const col = CATEGORY_COLORS[cat] || CATEGORY_COLORS.other;
+            return `<span class="cal-dot" style="background:${col}"></span>`;
+          }).join('') +
+          (cats.length > maxDots ? `<span class="cal-dot-more">+${cats.length - maxDots}</span>` : '') +
+          '</div>';
+      }
+
+      return `<div class="${cls}" onclick="App.selectCalendarDate('${c.dateStr}')">
+        <span class="cal-cell-num">${c.day}</span>${dotsHtml}
+      </div>`;
+    }).join('');
+  },
+
+  selectCalendarDate(dateStr) {
+    this.currentDate = dateStr;
+    const d = Util.parseDate(dateStr);
+    this.calendarYear = d.getFullYear();
+    this.calendarMonth = d.getMonth() + 1;
+    this.renderIndex();
+  },
+
+  goPrevMonth() {
+    if (this.calendarMonth === 1) { this.calendarMonth = 12; this.calendarYear--; }
+    else this.calendarMonth--;
+    // Select 1st of new month, or today if in that month
+    const today = new Date();
+    if (this.calendarYear === today.getFullYear() && this.calendarMonth === today.getMonth() + 1) {
+      this.currentDate = Util.formatDate(today);
+    } else {
+      this.currentDate = `${this.calendarYear}-${String(this.calendarMonth).padStart(2,'0')}-01`;
+    }
+    this.renderIndex();
+  },
+
+  goNextMonth() {
+    if (this.calendarMonth === 12) { this.calendarMonth = 1; this.calendarYear++; }
+    else this.calendarMonth++;
+    const today = new Date();
+    if (this.calendarYear === today.getFullYear() && this.calendarMonth === today.getMonth() + 1) {
+      this.currentDate = Util.formatDate(today);
+    } else {
+      this.currentDate = `${this.calendarYear}-${String(this.calendarMonth).padStart(2,'0')}-01`;
+    }
+    this.renderIndex();
+  },
+
+  goToday() {
+    const today = new Date();
+    this.currentDate = Util.formatDate(today);
+    this.calendarYear = today.getFullYear();
+    this.calendarMonth = today.getMonth() + 1;
+    this.renderIndex();
+  },
+
+  // ---- Create Page ----
+  renderCreateForm() {
+    this.isEdit = false;
+    this.editScheduleId = '';
+    const today = Util.formatDate(new Date());
+    const nowTime = Util.formatTime(new Date());
+    document.getElementById('formTitle').value = '';
+    document.getElementById('formDate').value = today;
+    document.getElementById('formStartTime').value = nowTime;
+    document.getElementById('formEndTime').value = '';
+    document.getElementById('formNote').value = '';
+    document.getElementById('formError').classList.remove('show');
+    document.getElementById('submitBtn').textContent = '保存日程';
+    this.renderCategoryGrid('other');
+  },
+
+  populateEditForm(scheduleId) {
+    DataService.getScheduleById(scheduleId).then(schedule => {
+      if (!schedule) return;
+      this.isEdit = true;
+      this.editScheduleId = scheduleId;
+      document.getElementById('formTitle').value = schedule.title || '';
+      document.getElementById('formDate').value = schedule.date || '';
+      document.getElementById('formStartTime').value = schedule.startTime || '';
+      document.getElementById('formEndTime').value = schedule.endTime || '';
+      document.getElementById('formNote').value = schedule.note || '';
+      document.getElementById('formError').classList.remove('show');
+      document.getElementById('submitBtn').textContent = '保存修改';
+      this.renderCategoryGrid(schedule.category || 'other');
+      this.switchTab(1);
+    });
+  },
+
+  renderCategoryGrid(selected) {
+    const grid = document.getElementById('categoryGrid');
+    grid.innerHTML = CATEGORY_LIST.map(cat => {
+      const color = CATEGORY_COLORS[cat];
+      const label = CATEGORY_LABEL[cat];
+      const sel = cat === selected;
+      return `<span class="category-chip${sel?' selected':''}" data-cat="${cat}"
+        style="${sel?('border-color:'+color+';color:'+color+';background:'+color+'15;font-weight:700'):''}"
+        onclick="App.selectCategory('${cat}')">${label}</span>`;
+    }).join('');
+  },
+
+  selectCategory(cat) { this.renderCategoryGrid(cat); },
+
+  getSelectedCategory() {
+    const chip = document.querySelector('#categoryGrid .category-chip.selected');
+    return chip ? chip.dataset.cat : 'other';
+  },
+
+  async onSubmit() {
+    const formData = {
+      title: document.getElementById('formTitle').value,
+      date: document.getElementById('formDate').value,
+      startTime: document.getElementById('formStartTime').value,
+      endTime: document.getElementById('formEndTime').value,
+      note: document.getElementById('formNote').value
+    };
+    const category = this.getSelectedCategory();
+    if (category === 'other' && formData.title) {
+      const detected = Util.detectCategory(formData.title);
+      if (detected !== 'other') { formData.category = detected; this.renderCategoryGrid(detected); }
+    }
+    formData.category = this.getSelectedCategory();
+
+    const { valid, message } = Validator.validateScheduleForm(formData);
+    if (!valid) { this.showFormError(message); return; }
+    document.getElementById('formError').classList.remove('show');
+
+    this.showLoading('保存中...');
+    try {
+      if (this.isEdit) {
+        await DataService.updateSchedule({ scheduleId: this.editScheduleId, ...formData });
+      } else {
+        await DataService.createSchedule(formData);
+      }
+      this.hideLoading();
+      this.showToast(this.isEdit ? '已更新' : '已创建');
+      setTimeout(() => { this.renderCreateForm(); this.switchTab(0); }, 800);
+    } catch (e) {
+      this.hideLoading();
+      this.showFormError('保存失败: ' + e.message);
+    }
+  },
+
+  showFormError(msg) {
+    const el = document.getElementById('formError');
+    el.textContent = msg;
+    el.classList.add('show');
+  },
+
+  // ---- Suggestions Page ----
+  async renderSuggestions() {
+    const schedules = (await DataService.getSchedulesByDate('', 'active'));
+    const suggestions = await DataService.getSuggestions();
+    const favorites = [];
+    schedules.forEach(schedule => {
+      const sug = suggestions.find(s => s.scheduleId === schedule._id && s.isFavorite);
+      if (sug) {
+        favorites.push({
+          _id: sug._id, content: sug.content, isFavorite: sug.isFavorite,
+          createdAt: sug.createdAt, scheduleTitle: schedule.title,
+          scheduleId: schedule._id, scheduleDate: schedule.date
+        });
+      }
+    });
+
+    const listEl = document.getElementById('suggestionList');
+    if (favorites.length === 0) {
+      listEl.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">⭐</div>
+        <div class="empty-text">暂无收藏的 AI 建议</div>
+        <div class="empty-sub">在日程详情中收藏 AI 建议</div>
+      </div>`;
+    } else {
+      listEl.innerHTML = favorites.map(f => `
+        <div class="suggestion-card-full" onclick="App.openDetail('${f.scheduleId}')">
+          <div class="suggestion-header">
+            <span class="suggestion-schedule-title">${this.escHtml(f.scheduleTitle)}</span>
+            <span class="suggestion-date">${f.scheduleDate}</span>
+          </div>
+          <div class="suggestion-content">${this.escHtml(f.content)}</div>
+          <div class="suggestion-actions">
+            <span class="unfavorite-btn" onclick="event.stopPropagation();App.onUnfavorite('${f._id}')">
+              <span class="star-icon">★</span>
+              <span>取消收藏</span>
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+  },
+
+  async onUnfavorite(suggestionId) {
+    await DataService.toggleFavorite(suggestionId, false);
+    this.showToast('已取消收藏');
+    this.renderSuggestions();
+  },
+
+  // ---- Profile Page ----
+  async renderProfile() {
+    const user = await DataService.getUser() || await DataService.initUser();
+    document.getElementById('nicknameDisplay').textContent = user.nickName || '用户';
+    document.getElementById('avatarCircle').textContent = (user.nickName || '用')[0];
+    document.getElementById('openidTip').textContent = 'ID: ****' + (user.openid || 'user').slice(-4);
+
+    const stats = await DataService.getStats();
+    this.animateNumber('statTotal', stats.totalSchedules);
+    this.animateNumber('statSuggestions', stats.suggestionCount);
+    const suggestions = await DataService.getSuggestions();
+    const favCount = suggestions.filter(s => s.isFavorite).length;
+    this.animateNumber('statFavorites', favCount);
+  },
+
+  animateNumber(id, target) {
+    const el = document.getElementById(id);
+    const current = parseInt(el.textContent) || 0;
+    if (current === target) { el.textContent = target; return; }
+    const duration = 400;
+    const start = performance.now();
+    const step = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(current + (target - current) * eased);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  },
+
+  async onEditNickname() {
+    const user = await DataService.getUser() || await DataService.initUser();
+    document.getElementById('nicknameInput').value = user.nickName || '';
+    document.getElementById('nicknameModal').classList.add('show');
+    setTimeout(() => document.getElementById('nicknameInput').focus(), 100);
+  },
+
+  dismissNickname() { document.getElementById('nicknameModal').classList.remove('show'); },
+
+  async saveNickname() {
+    const name = document.getElementById('nicknameInput').value.trim();
+    if (!name) { this.showToast('昵称不能为空', 'error'); return; }
+    const user = await DataService.getUser() || await DataService.initUser();
+    user.nickName = name;
+    user.updatedAt = new Date().toISOString();
+    await DataService.saveUser(user);
+    this.dismissNickname();
+    this.renderProfile();
+    this.showToast('昵称已更新');
+  },
+
+  async onSubscribeReminder() {
+    this.showConfirm('提醒设置', '是否开启日程提醒功能？\n（网页版将通过浏览器通知实现）', async () => {
+      const user = await DataService.getUser() || await DataService.initUser();
+      user.subscribedReminder = true;
+      user.updatedAt = new Date().toISOString();
+      await DataService.saveUser(user);
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+      this.showToast('提醒已开启');
+    });
+  },
+
+  onAbout() {
+    this.showAlert('关于 AI 日历', '版本 2.0.0<br><br>AI 驱动的智能日程管理助手<br>支持 DeepSeek / OpenAI 等大模型<br>深度推理生成专业行动建议<br><br>数据安全存储于本地浏览器');
+  },
+
+  // ---- AI Settings ----
+  async onAiSettings() {
+    const user = await DataService.getUser() || await DataService.initUser();
+    document.getElementById('aiEndpoint').value = user.aiEndpoint || '';
+    document.getElementById('aiKey').value = user.aiKey || '';
+    document.getElementById('aiModel').value = user.aiModel || 'deepseek-reasoner';
+    this.updateAiStatus();
+    document.getElementById('aiSettingsModal').classList.add('show');
+  },
+
+  updateAiStatus() {
+    const endpoint = document.getElementById('aiEndpoint').value.trim();
+    const key = document.getElementById('aiKey').value.trim();
+    const statusEl = document.getElementById('aiStatus');
+    if (endpoint && key) {
+      statusEl.className = 'ai-status ready';
+      statusEl.textContent = '✅ AI 已配置就绪';
+    } else {
+      statusEl.className = 'ai-status unset';
+      statusEl.textContent = '⚠️ 请配置 API 端点和 Key 以启用深度 AI 建议';
+    }
+  },
+
+  dismissAiSettings() { document.getElementById('aiSettingsModal').classList.remove('show'); },
+
+  async saveAiSettings() {
+    const endpoint = document.getElementById('aiEndpoint').value.trim();
+    const key = document.getElementById('aiKey').value.trim();
+    const model = document.getElementById('aiModel').value;
+    const user = await DataService.getUser() || await DataService.initUser();
+    user.aiEndpoint = endpoint;
+    user.aiKey = key;
+    user.aiModel = model;
+    user.updatedAt = new Date().toISOString();
+    await DataService.saveUser(user);
+    this.dismissAiSettings();
+    this.showToast('AI 设置已保存');
+  },
+
+  // ---- Data Export / Import / Clear ----
+  async onExportData() {
+    this.showLoading('导出中...');
+    try {
+      const data = await DataService.exportAll();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ai-calendar-backup-${Util.formatDateFilename(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.hideLoading();
+      this.showToast('数据导出成功');
+    } catch(e) {
+      this.hideLoading();
+      this.showToast('导出失败: ' + e.message, 'error');
+    }
+  },
+
+  async onImportData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.showLoading('导入中...');
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.schedules && !data.suggestions) {
+        throw new Error('无效的备份文件格式');
+      }
+      await DataService.importAll(data);
+      this.hideLoading();
+      this.showToast('数据导入成功');
+      this.renderIndex();
+      this.renderSuggestions();
+      this.renderProfile();
+    } catch(e) {
+      this.hideLoading();
+      this.showToast('导入失败: ' + e.message, 'error');
+    }
+    event.target.value = '';
+  },
+
+  onClearData() {
+    this.showConfirm('清空数据', '此操作将删除所有日程、建议和用户数据，且不可恢复。确认继续？', async () => {
+      this.showLoading('清空中...');
+      try {
+        await IDBService.clearAll();
+        await DataService.initUser();
+        this.hideLoading();
+        this.showToast('数据已清空');
+        this.renderIndex();
+        this.renderSuggestions();
+        this.renderProfile();
+      } catch(e) {
+        this.hideLoading();
+        this.showToast('清空失败: ' + e.message, 'error');
+      }
+    });
+  },
+
+  // ---- Detail Modal ----
+  async openDetail(scheduleId) {
+    const schedule = await DataService.getScheduleById(scheduleId);
+    if (!schedule || schedule.status === 'deleted') {
+      this.showToast('日程不存在或已删除', 'error');
+      return;
+    }
+    this._detailScheduleId = scheduleId;
+    const suggestion = await DataService.getSuggestionByScheduleId(scheduleId);
+    this.renderDetail(schedule, suggestion);
+    document.getElementById('detailMask').classList.add('show');
+  },
+
+  closeDetail() {
+    document.getElementById('detailMask').classList.remove('show');
+    this._detailScheduleId = '';
+  },
+  closeDetailOutside(e) {
+    if (e.target === document.getElementById('detailMask')) this.closeDetail();
+  },
+
+  renderDetail(schedule, suggestion) {
+    const label = CATEGORY_LABEL[schedule.category] || schedule.category;
+    const weekday = Util.getWeekday(schedule.date);
+    const timeDisplay = schedule.endTime ? `${schedule.startTime} - ${schedule.endTime}` : schedule.startTime;
+
+    let suggestionHtml = '';
+    if (suggestion) {
+      suggestionHtml = `<div class="detail-ai-card">
+        <div class="detail-ai-card-title">✨ AI 深度建议</div>
+        <div class="detail-ai-card-content">${this.escHtml(suggestion.content)}</div>
+        <div class="detail-ai-actions">
+          <span class="detail-ai-fav${suggestion.isFavorite?' favorited':''}" onclick="App.onToggleFavoriteDetail('${suggestion._id}', ${!suggestion.isFavorite})">${suggestion.isFavorite ? '★' : '☆'}</span>
+          <span class="detail-ai-del" onclick="App.onDeleteSuggestionDetail('${suggestion._id}')">删除建议</span>
+        </div>
+      </div>`;
+    } else {
+      suggestionHtml = `<div class="detail-ai-empty">
+        <div class="detail-ai-empty-icon">🤖</div>
+        <div class="detail-ai-empty-text">暂无 AI 建议</div>
+        <button class="detail-ai-gen-btn" onclick="App.onGenerateSuggestion('${schedule._id}')">✨ 生成 AI 深度建议</button>
+      </div>`;
+    }
+
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-info-card">
+        <div class="detail-info-title">${this.escHtml(schedule.title)}</div>
+        <div class="detail-info-row"><span class="detail-info-label">日期：</span>${schedule.date} ${weekday}</div>
+        <div class="detail-info-row"><span class="detail-info-label">时间：</span>${timeDisplay}</div>
+        <div class="detail-info-tag">${label}</div>
+        ${schedule.note ? `<div class="detail-info-note"><div class="detail-note-label">备注：</div><div class="detail-note-content">${this.escHtml(schedule.note)}</div></div>` : ''}
+      </div>
+      <div class="detail-actions">
+        <button class="detail-btn-edit" onclick="App.populateEditForm('${schedule._id}');App.closeDetail();">编辑</button>
+        <button class="detail-btn-delete" onclick="App.onDeleteSchedule('${schedule._id}')">删除</button>
+      </div>
+      <div class="detail-ai-section">${suggestionHtml}</div>
+    `;
+  },
+
+  async refreshDetail() {
+    if (!this._detailScheduleId) return;
+    const schedule = await DataService.getScheduleById(this._detailScheduleId);
+    const suggestion = await DataService.getSuggestionByScheduleId(this._detailScheduleId);
+    if (schedule) this.renderDetail(schedule, suggestion);
+  },
+
+  // ---- Detail Actions ----
+  onDeleteSchedule(scheduleId) {
+    this.showConfirm('确认删除', '删除后日程将不再显示', async () => {
+      await DataService.deleteSchedule(scheduleId);
+      this.showToast('已删除');
+      this.closeDetail();
+      this.renderIndex();
+    });
+  },
+
+  async onGenerateSuggestion(scheduleId) {
+    const schedule = await DataService.getScheduleById(scheduleId);
+    if (!schedule) return;
+
+    // Check existing
+    const existing = await DataService.getSuggestionByScheduleId(scheduleId);
+    if (existing) {
+      this.refreshDetail();
+      return;
+    }
+
+    // Try AI API first
+    const user = await DataService.getUser();
+    const endpoint = (user && user.aiEndpoint) ? user.aiEndpoint.trim() : '';
+    const apiKey = (user && user.aiKey) ? user.aiKey.trim() : '';
+    const model = (user && user.aiModel) || 'deepseek-reasoner';
+
+    if (!endpoint || !apiKey) {
+      // No API configured → guide user, then use fallback
+      this.showConfirm('未配置 AI', '请先在「个人中心 → AI 设置」中配置 API 端点和 Key，以获得专业深度建议。\n\n现在将使用基础规则引擎生成建议。', async () => {
+        await this.doFallbackSuggestion(scheduleId, schedule);
+      });
+      return;
+    }
+
+    // Show deep thinking loading
+    this.showLoading('AI 深度思考中...');
+    const detailSection = document.querySelector('.detail-ai-section');
+    if (detailSection) {
+      detailSection.innerHTML = `<div class="detail-ai-generating">
+        <div class="loading-spinner"></div>
+        <div>AI 深度思考中...</div>
+      </div>`;
+    }
+
+    const category = schedule.category || 'other';
+    const categoryLabel = CATEGORY_LABEL[category] || category;
+    const timeStr = schedule.endTime ? `${schedule.startTime} - ${schedule.endTime}` : schedule.startTime;
+
+    // ---- Fetch real weather for travel ----
+    let weatherContext = '';
+    if (category === 'travel' || category === 'trip') {
+      const cityName = schedule.title;
+      try {
+        const geoResp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=zh`, {signal: AbortSignal.timeout(5000)});
+        const geoData = await geoResp.json();
+        if (geoData.results && geoData.results.length > 0) {
+          const { latitude, longitude, name, country } = geoData.results[0];
+          const wResp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&forecast_days=5&timezone=Asia/Shanghai`, {signal: AbortSignal.timeout(5000)});
+          const wData = await wResp.json();
+          if (wData.daily && wData.daily.time) {
+            const wMap = {0:'晴',1:'晴间多云',2:'多云',3:'阴',45:'雾',51:'小雨',53:'小雨',55:'小雨',61:'中雨',63:'中雨',65:'大雨',80:'阵雨',81:'阵雨',82:'暴雨',95:'雷暴',96:'雷暴+冰雹',99:'雷暴+冰雹'};
+            const days = wData.daily.time.map((d,i) => `${d} ${wMap[wData.daily.weather_code[i]]||'未知'} ${Math.round(wData.daily.temperature_2m_max[i])}°C/${Math.round(wData.daily.temperature_2m_min[i])}°C 降雨概率${wData.daily.precipitation_probability_max[i]}%`).join('\n');
+            weatherContext = `\n【实时5日天气 for ${name}${country?','+country:''}】\n${days}\n`;
+          }
+        }
+      } catch(e) { /* weather fetch failed, use AI knowledge as fallback */ }
+    }
+    const prompts = {
+      travel: {
+        system: `你是资深旅行规划师。根据用户目的地和天气，输出一份真实可执行的旅行攻略。
+
+【输出格式】只输出以下三段，不要加任何前缀或后缀：
+
+【景点推荐（3-5个真实景点）】
+每景点包含：景点全名 / 一句话介绍(含亮点) / 建议游玩时长 / 门票参考价 / 评分(来源:大众点评或携程) / 最佳时间段 / 到达方式(地铁几号线哪站)
+
+【美食探店（3-5家真实餐厅）】
+每家包含：餐厅全名 / 菜系类型 / 人均消费 / 招牌菜(2-3道) / 评分(必须注明"大众点评 X.X分"或"携程美食林 X.X分") / 推荐理由一句 / 是"老字号/网红店/本地人推荐"
+
+【酒店推荐（2-3家真实酒店）】
+每家包含：酒店全名 / 选址区域 / 每晚价格区间 / 评分(必须注明"携程 X.X分") / 一句话推荐理由 / 距地铁距离
+
+要求：
+- 所有景点、餐厅、酒店必须真实存在！禁止虚构编造！
+- 评分必须有确切数字，来源于大众点评/携程/马蜂窝等可信平台
+- 必须结合上面提供的实时天气给出穿衣和行程建议
+- 字数600-800字`,
+
+        user: `我要去${schedule.title}旅游。日期${schedule.date}${schedule.note?'，特殊需求:'+schedule.note:''}。${weatherContext}请按格式输出攻略。`
+      },
+      trip: {
+        system: `你是一个企业差旅管理专家。根据用户的出差信息，输出一份专业出差攻略。
+
+要求输出以下三部分：
+
+【目的地概况】当地天气趋势（温度、降水概率）、穿衣建议、时差提醒（如跨时区）。
+
+【交通方案】推荐航班/高铁班次选择策略，市内交通建议，接送机注意事项。
+
+【经办要点】客户拜访准备清单、合同签约注意事项、费用报销提醒、出差报告模板建议。
+
+整体字数300-400字。具体可操作，给出时间节点和方法论名称。`,
+        user: `出差计划：${schedule.title}。日期：${schedule.date}，时间：${timeStr}。备注：${schedule.note || '无'}。请输出专业出差攻略。`
+      },
+      family: {
+        system: `你是一个家庭聚会策划师。根据用户的家庭聚会信息，输出一份温馨实用的聚会方案。
+
+要求输出：【餐厅/场地推荐】2-3个适合家庭聚会的场地（含餐厅名、人均、适合人数、一句话理由）；【菜单建议】必点菜品搭配建议；【活动策划】1-2个适合全家参与的活动或游戏建议；【心意清单】给长辈和小孩的礼品建议。
+
+整体字数300-400字。温馨实用，有仪式感。`,
+        user: `家庭聚会：${schedule.title}。日期：${schedule.date}。备注：${schedule.note || '无'}。请输出家庭聚会方案。`
+      },
+      todo: {
+        system: `你是一个时间管理与任务规划专家。根据用户的待办事项，输出一份高效执行方案。
+
+要求输出：【优先级判定】用艾森豪威尔矩阵分析此任务的紧急重要程度；【执行策略】给出具体行动步骤和时间分配；【防拖延技巧】针对此任务类型的防拖延建议；【复盘框架】完成后如何复盘。
+
+整体字数250-350字。`,
+        user: `待办事项：${schedule.title}。截止日期：${schedule.date}。备注：${schedule.note || '无'}。请输出任务执行方案。`
+      }
+    };
+
+    // Default/generic prompt
+    const defaultPrompt = {
+      system: '你是一个专业的日程管理顾问。根据用户的日程信息，生成一条专业行动建议。要求：具体可操作、有专业深度、针对该日程类型给出独特见解，引用具体方法论名称。必须输出不少于180字、不超过300字。给出具体步骤、时间分配建议和风险提示。禁止笼统回应。只输出建议内容，不要加任何前缀说明。',
+      user: `日程：${schedule.title}，分类：${categoryLabel}，日期：${schedule.date}，时间：${timeStr}，备注：${schedule.note || '无'}。请输出一段180-300字的专业行动建议，包含具体步骤和方法论。`
+    };
+
+    const selectedPrompt = prompts[category] || defaultPrompt;
+    const messages = [
+      { role: 'system', content: selectedPrompt.system },
+      { role: 'user', content: selectedPrompt.user }
+    ];
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: messages,
+          stream: false,
+          max_tokens: category === 'travel' ? 2000 : (category === 'trip' ? 1200 : 800),
+          temperature: 0.85
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        let errMsg = `API 错误 (${resp.status})`;
+        if (resp.status === 401) errMsg = 'API Key 无效，请检查设置';
+        else if (resp.status === 403) errMsg = 'API 访问被拒绝';
+        else if (resp.status === 404) errMsg = 'API 端点不存在';
+        else if (resp.status === 429) errMsg = 'API 请求频率超限，请稍后再试';
+        else if (resp.status >= 500) errMsg = 'AI 服务暂时不可用';
+        throw new Error(errMsg);
+      }
+
+      const json = await resp.json();
+      const content = json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
+      if (!content || !content.trim()) throw new Error('AI 返回了空内容');
+
+      // Smart truncation: take up to 1200 chars, then cut at natural sentence boundary if > 800
+      let suggestion = content.trim().substring(0, 1200);
+      if (suggestion.length > 800) {
+        const lastPeriod = suggestion.lastIndexOf('。');
+        const lastExclaim = suggestion.lastIndexOf('！');
+        const lastQ = suggestion.lastIndexOf('？');
+        const cutPoint = Math.max(lastPeriod, lastExclaim, lastQ);
+        if (cutPoint > 200 && cutPoint < suggestion.length - 1) {
+          suggestion = suggestion.substring(0, cutPoint + 1);
+        }
+      }
+      await DataService.createSuggestion(scheduleId, suggestion);
+      this.hideLoading();
+      this.showToast('深度建议已生成');
+      await this.refreshDetail();
+    } catch (e) {
+      this.hideLoading();
+      let errorMsg = e.message;
+      if (e.name === 'AbortError') errorMsg = 'AI 请求超时（30秒），请检查网络';
+      else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) errorMsg = '网络连接失败，请检查 API 端点';
+
+      // Show error in detail panel with retry
+      if (detailSection) {
+        detailSection.innerHTML = `<div class="detail-ai-card">
+          <div class="detail-ai-card-title">⚠️ AI 调用失败</div>
+          <div class="detail-ai-card-content">${this.escHtml(errorMsg)}</div>
+          <div class="detail-ai-error">
+            <div class="detail-ai-retry" onclick="App.onRetryAiSuggestion('${scheduleId}')">🔄 重试</div>
+            <div class="detail-ai-retry" onclick="App.doFallbackSuggestion('${scheduleId}')">📋 使用基础建议</div>
+          </div>
+        </div>`;
+      }
+    }
+  },
+
+  async onRetryAiSuggestion(scheduleId) {
+    await this.onGenerateSuggestion(scheduleId);
+  },
+
+  async doFallbackSuggestion(scheduleId, schedule) {
+    if (!schedule) schedule = await DataService.getScheduleById(scheduleId);
+    if (!schedule) return;
+    this.showLoading('生成中...');
+    try {
+      const content = AIEngine.matchSuggestion(schedule.title, schedule.note || '');
+      await DataService.createSuggestion(scheduleId, content);
+      this.hideLoading();
+      this.showToast('基础建议已生成');
+    } catch(e) {
+      this.hideLoading();
+      this.showToast('生成失败', 'error');
+    }
+    await this.refreshDetail();
+  },
+
+  async onToggleFavoriteDetail(suggestionId, isFavorite) {
+    await DataService.toggleFavorite(suggestionId, isFavorite);
+    this.showToast(isFavorite ? '已收藏' : '已取消收藏');
+    await this.refreshDetail();
+  },
+
+  onDeleteSuggestionDetail(suggestionId) {
+    this.showConfirm('确认删除', '确定要删除这条 AI 建议吗？', async () => {
+      await DataService.deleteSuggestion(suggestionId);
+      this.showToast('已删除');
+      await this.refreshDetail();
+    });
+  },
+
+  // ---- Toast ----
+  toastTimer: null,
+  showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast' + (type === 'error' ? ' error' : '');
+    el.classList.add('show');
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  },
+
+  // ---- Loading ----
+  showLoading(msg) {
+    document.getElementById('loadingText').textContent = msg || '加载中...';
+    document.getElementById('loadingOverlay').classList.add('show');
+  },
+  hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('show');
+  },
+
+  // ---- Confirm Modal ----
+  showConfirm(title, content, callback) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmContent').textContent = content;
+    this.confirmCallback = callback;
+    document.getElementById('confirmModal').classList.add('show');
+  },
+  dismissConfirm() {
+    document.getElementById('confirmModal').classList.remove('show');
+    this.confirmCallback = null;
+  },
+  confirmOk() {
+    document.getElementById('confirmModal').classList.remove('show');
+    if (this.confirmCallback) {
+      const cb = this.confirmCallback;
+      this.confirmCallback = null;
+      cb();
+    }
+  },
+
+  // ---- Alert Modal ----
+  showAlert(title, content) {
+    document.getElementById('alertTitle').textContent = title;
+    document.getElementById('alertContent').innerHTML = content.replace(/\n/g, '<br>');
+    document.getElementById('alertModal').classList.add('show');
+  },
+  dismissAlert() {
+    document.getElementById('alertModal').classList.remove('show');
+  },
+
+  // ---- Utility ----
+  escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+};
+
+// ---- Keyboard support ----
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('detailMask').classList.contains('show')) App.closeDetail();
+    else if (document.getElementById('aiSettingsModal').classList.contains('show')) App.dismissAiSettings();
+    else if (document.getElementById('confirmModal').classList.contains('show')) App.dismissConfirm();
+    else if (document.getElementById('alertModal').classList.contains('show')) App.dismissAlert();
+    else if (document.getElementById('nicknameModal').classList.contains('show')) App.dismissNickname();
+  }
+  if (App.currentTab === 0 && !document.querySelector('.modal-mask.show') && !document.getElementById('detailMask').classList.contains('show')) {
+    if (e.key === 'ArrowLeft') App.goPrevDay();
+    if (e.key === 'ArrowRight') App.goNextDay();
+  }
+  if (e.key === 'Enter' && App.currentTab === 1 && document.activeElement && document.activeElement.tagName !== 'TEXTAREA') {
+    App.onSubmit();
+  }
+});
+
+// ========================================
+// Auth (Login System)
+// ========================================
+const AUTH_HASH = '09447d54b53be0a827c4a9d64bc448d051f10668eb6135db9835e5522e9d6f66'; // SHA-256 of password
+const AUTH_VALID_USER = 'lzh';
+const AUTH_KEY = 'ai-calendar-auth';
+
+App.checkAuth = function() {
+  return sessionStorage.getItem(AUTH_KEY) === 'true';
+};
+
+App.showApp = function() {
+  document.getElementById('loginContainer').classList.add('hidden');
+  document.getElementById('app').style.display = '';
+};
+
+App.showLogin = function() {
+  document.getElementById('loginContainer').classList.remove('hidden');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginUsername').focus();
+};
+
+App.doLogin = async function() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errorEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if (!username || !password) {
+    errorEl.textContent = '请输入账号和密码';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '验证中...';
+  errorEl.textContent = '';
+
+  try {
+    // Hash password with SHA-256 via Web Crypto API
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+
+    if (username === AUTH_VALID_USER && hashHex === AUTH_HASH) {
+      sessionStorage.setItem(AUTH_KEY, 'true');
+      App.showApp();
+      App.init();
+    } else {
+      errorEl.textContent = '账号或密码错误';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginPassword').focus();
+    }
+  } catch(e) {
+    errorEl.textContent = '验证失败: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '登 录';
+  }
+};
+
+App.doLogout = function() {
+  sessionStorage.removeItem(AUTH_KEY);
+  App.showLogin();
+};
+
+// Keyboard: Enter to login
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !document.getElementById('loginContainer').classList.contains('hidden')) {
+    App.doLogin();
+  }
+});
+
+// ---- Initialize ----
+// #app hidden until auth check
+document.getElementById('app').style.display = 'none';
+if (App.checkAuth()) {
+  App.showApp();
+  App.init();
+} else {
+  App.showLogin();
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      console.log('SW registered:', reg.scope);
+    }).catch((err) => {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}
+</script>
+
+</body>
+</html>
